@@ -1,7 +1,11 @@
 "use client";
+import { useState } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
 import { AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Card, CardContent } from '@mui/material';
+import HabitCard from "./card";
+import { JSX } from "@emotion/react/jsx-runtime";
+
 
 const darkTheme = createTheme({
   palette: {
@@ -9,7 +13,13 @@ const darkTheme = createTheme({
   },
 });
 
+
+
 export default function Home() {
+  const [components, setComponents] = useState<JSX.Element[]>([]);
+  const addComponent = () => {
+    setComponents((prev) => [...prev, <HabitCard key={prev.length} />]);
+  };
   return (
     <>
     <ThemeProvider theme={darkTheme}> 
@@ -18,28 +28,15 @@ export default function Home() {
       <Typography variant="h6" sx={{ flexGrow: 1 }}>
         Habit Tracker
       </Typography>
-      <Button>Login</Button>
+      <Button onClick={() => addComponent()}>Login</Button>
     </Toolbar>
   </AppBar>
   
   <Container sx={{bgcolor: "white", height: "93vh", display: "flex",   flexWrap: "wrap", gap:2, alignContent: "flex-start", justifyContent: "Center" }}>
 
-    <Card variant="outlined" sx={{width: 300, height: 150, mt: 1.5}}> 
-    <CardContent>
-      <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 18 }}>
-        Habit
-      </Typography>
-      <Typography variant="h5" component="div">
-      </Typography>
-      <Typography sx={{ color: 'text.secondary', mb: 1.5 }}>adjective</Typography>
-      <Typography variant="body2">
-        well meaning and kindly.
-        <br />
-        {'"a benevolent smile"'}
-      </Typography>
-    </CardContent>
-    </Card> 
-    
+  {components.map((item, index) => (
+          <HabitCard key={index}/>
+        ))}
     
 
   </Container>
