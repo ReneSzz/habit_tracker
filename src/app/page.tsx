@@ -4,7 +4,11 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import { AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Card, CardContent } from '@mui/material';
 import HabitCard from "./card";
+import {app, db} from './lib/firebaseConfig'
+import { getFirestore, Firestore, addDoc, collection } from "firebase/firestore";
 import { JSX } from "@emotion/react/jsx-runtime";
+import firebase from "firebase/compat/app";
+
 
 
 const darkTheme = createTheme({
@@ -12,6 +16,11 @@ const darkTheme = createTheme({
     mode: 'dark',
   },
 });
+// Add a new document
+
+
+
+
 
 
 
@@ -20,6 +29,24 @@ export default function Home() {
   const addComponent = () => {
     setComponents((prev) => [...prev, <HabitCard key={prev.length} />]);
   };
+  const habit = {title: "Habit Test"}
+  console.log(db)
+async function addHabit(db: Firestore, habitData: object) {
+
+  try {
+
+    const docRef = await addDoc(collection(db, "habit"), habitData);
+
+    console.log("Document written with ID: ", docRef.id);
+
+  } catch (e: any) {
+
+    console.error("Error adding document:", e.message, e.code);
+
+  }
+
+}
+ 
   return (
     <>
     <ThemeProvider theme={darkTheme}> 
@@ -28,7 +55,18 @@ export default function Home() {
       <Typography variant="h6" sx={{ flexGrow: 1 }}>
         Habit Tracker
       </Typography>
-      <Button onClick={() => addComponent()}>Login</Button>
+      <Button
+  onClick={async () => {
+    try {
+      await addHabit(db, habit);
+      console.log("Habit added successfully");
+    } catch (error) {
+      console.error("Error adding habit:", error);
+    }
+  }}
+>
+  Add Habit
+</Button>
     </Toolbar>
   </AppBar>
   
