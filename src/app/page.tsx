@@ -31,7 +31,7 @@ export default function Home() {
     setComponents((prev) => [...prev, <HabitCard key={prev.length} />]);
   };
   const habit = {title: "Habit Test"}
-  console.log(db)
+
 async function addHabit(db: Firestore, habitData: object) {
 
   try {
