@@ -8,12 +8,13 @@ import {app, db} from './lib/firebaseConfig'
 import { getFirestore, Firestore, addDoc, collection } from "firebase/firestore";
 import { JSX } from "@emotion/react/jsx-runtime";
 import firebase from "firebase/compat/app";
+import Link from "next/link";
 
 
 
-const darkTheme = createTheme({
+const Theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
   },
 });
 // Add a new document
@@ -49,28 +50,21 @@ async function addHabit(db: Firestore, habitData: object) {
  
   return (
     <>
-    <ThemeProvider theme={darkTheme}> 
-    <AppBar position="static">
-    <Toolbar>
+    <ThemeProvider theme={Theme}> 
+    <AppBar sx={{ backgroundColor: "white", color: "black", boxShadow: 1 }}position="static">
+    <Toolbar sx={{ display: "flex", justifyContent: "space-between"}}>
+    <Link  href="/"> 
       <Typography variant="h6" sx={{ flexGrow: 1 }}>
         Habit Tracker
       </Typography>
-      <Button
-  onClick={async () => {
-    try {
-      await addHabit(db, habit);
-      console.log("Habit added successfully");
-    } catch (error) {
-      console.error("Error adding habit:", error);
-    }
-  }}
->
-  Add Habit
-</Button>
+      </Link>
+      <Link href="/signup" > 
+      <Button> Sign up </Button>
+      </Link>
     </Toolbar>
   </AppBar>
   
-  <Container sx={{bgcolor: "white", height: "93vh", display: "flex",   flexWrap: "wrap", gap:2, alignContent: "flex-start", justifyContent: "Center" }}>
+  <Container sx={{bgcolor: "black", height: "93vh", display: "flex",   flexWrap: "wrap", gap:2, alignContent: "flex-start", justifyContent: "Center" }}>
 
   {components.map((item, index) => (
           <HabitCard key={index}/>
