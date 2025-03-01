@@ -1,8 +1,6 @@
 "use client";
 import { useState, useEffect, JSX } from "react";
-import {  Menu , AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
-import HabitCard from "./card";
-import InputLabel from '@mui/material/InputLabel';
+import {  LinearProgress,Menu , AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Link from "next/link";
@@ -11,9 +9,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { AuthProvider } from "./context/auth";
 import PrivateRoute from "./lib/PrivateRoute";
 import { User } from "firebase/auth";
-import { getApp } from "firebase/app";
-import { wrap } from "module";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy } from "firebase/firestore";
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -52,8 +48,16 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
+  const [progress, setProgress] = useState(30);
 
-  
+  const increaseProgress = () => {
+    setProgress((prev) => Math.min(prev + 10, 100)); // Increment but max 100
+  };
+  const removeProgress = () => {
+    setProgress((prev) => Math.max(prev - 10, 0)); // Increment but max 100
+    handleMenuClose()
+  };
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, habitId: string) => {
     setAnchorEl(event.currentTarget);
     setSelectedHabit(habitId);
@@ -80,8 +84,9 @@ export default function Home() {
   const fetchHabits = async () => {
     if (!user || !user.uid) return;
     try {
-      const habitsRef = collection(db, 'users', user?.uid, 'habits');
-      const habitSnapshot = await getDocs(habitsRef);
+      const habitsRef = collection(db, "users", user.uid, "habits");
+      const q = query(habitsRef, orderBy("createdAt", "desc")); // Order by 'createdAt' field (newest first)
+      const habitSnapshot = await getDocs(q);
       const habitList = habitSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -108,7 +113,6 @@ export default function Home() {
       });
       console.log("Habit added successfully!");
       fetchHabits()
-      
       setHabitTitle(""); // Clear input after adding
     } catch (error) {
       console.error("Error adding habit:", error);
@@ -164,6 +168,10 @@ export default function Home() {
                     Habit Tracker
                   </Typography>
                 </Link>
+               <Box sx={{display: 'flex', alignItems: 'center', gap: '15px'}}> 
+                <LinearProgress variant="determinate" value={progress} sx={{ width: '800px', height: 10, borderRadius: 5 }} />
+        <Typography>{progress}%</Typography>
+        </Box>
 
                 {user ? (
                   <Button onClick={handleSignOut}>Sign Out</Button>
@@ -212,32 +220,40 @@ export default function Home() {
                 
             <Container
               sx={{
-                height: "93vh",
+                height: "86vh",
                 display: "flex",
                 flexWrap: "wrap",
                 gap: 2,
-                alignContent: "center",
-                justifyContent: "center",
+                paddingTop: '30px',
+                alignItems: 'flex-start'
+                
               }}
             >
               <Container sx={{display: "flex",
                 flexWrap: "wrap",
                 gap: 2,
-                alignContent: "center",
-                justifyContent: "center",}}>
-      <h2>Habits for User {user?.email}</h2>
+                
+            }}>
       {habits.length === 0 ? (
         <p>No habits found</p>
       ) : (
         
         habits.map((habit) => (
           <Card sx={{padding: '20px',width: '300px', height: '75px', display:'flex', alignItems: 'center', justifyContent: "space-between"}}key={habit.id}>
-            <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
+            <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14,whiteSpace: "nowrap", 
+      overflow: "hidden", 
+      textOverflow: 'clip', 
+      flex: 1 }}>
             {habit.title}
       </Typography>
+      <Box sx={{display: 'flex', alignItems: 'center', justifyContent: "center"}}> 
+      <Button onClick={increaseProgress} sx={{}}>
+        ✔
+      </Button>
       <IconButton onClick={(event) => handleMenuOpen(event, habit.id)}>
               <MoreVertIcon />
             </IconButton>
+            
 
             {/* Dropdown Menu */}
             <Menu
@@ -248,21 +264,26 @@ export default function Home() {
               <MenuItem onClick={() => deleteHabit()}>
                 <DeleteIcon sx={{ marginRight: 1 }} /> Delete
               </MenuItem>
+              <MenuItem onClick={() => removeProgress()}>
+                 Undo
+              </MenuItem>
             </Menu>
+            </Box>
             </Card>
         ))
       )}
     </Container>
-              <Container sx={{display: 'flex', alignItems: "center", justifyContent: "center",gap:'10px'}}> 
-              <Typography variant="h6"> Add habit  </Typography>
-              <Button variant="contained" sx={{ backgroundColor: '#FF4151'}} onClick={handleOpen}> + </Button>
-              </Container>
+              
               {/* {components.map((_, index) => (
                 <HabitCard key={index} />
               ))} */}
 
 
             </Container>
+            <Container sx={{display: 'flex', alignItems: "center", justifyContent: "center",gap:'10px'}}> 
+              <Typography variant="h6"> Add habit  </Typography>
+              <Button variant="contained" sx={{ backgroundColor: '#FF4151'}} onClick={handleOpen}> + </Button>
+              </Container>
           </ThemeProvider>
         </PrivateRoute>
       </AuthProvider>
