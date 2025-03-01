@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, JSX } from "react";
-import { AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select  } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card  } from "@mui/material";
 import HabitCard from "./card";
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
@@ -13,7 +13,7 @@ import PrivateRoute from "./lib/PrivateRoute";
 import { User } from "firebase/auth";
 import { getApp } from "firebase/app";
 import { wrap } from "module";
-import { collection, addDoc, getDocs, query, where  } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 
 const Theme = createTheme({
   palette: {
@@ -47,6 +47,17 @@ export default function Home() {
   const [value, setValue] = useState("");
   const [habits, setHabits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const deleteHabit = async (habitId: string) => {
+    if (!user || !user.uid) return;
+    try {
+      const habitDoc = doc(db, 'users', user?.uid, 'habits', habitId);
+      await deleteDoc(habitDoc);
+      fetchHabits(); // Refresh habits after deletion
+    } catch (error) {
+      console.error("Error deleting habit: ", error);
+    }
+  };
   
   const fetchHabits = async () => {
     if (!user || !user.uid) return;
@@ -153,7 +164,9 @@ export default function Home() {
               aria-describedby="modal-modal-description"
               >
               <Box sx={style }>
-
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                   Create a new habit
+                  </Typography>
                 <TextField               
                               id="standard-basic"
                               label="Habit"
@@ -189,19 +202,32 @@ export default function Home() {
                 justifyContent: "center",
               }}
             >
-              <div>
-      <h2>Habits for User {user?.uid}</h2>
+              <Container sx={{display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                alignContent: "center",
+                justifyContent: "center",}}>
+      <h2>Habits for User {user?.email}</h2>
       {habits.length === 0 ? (
         <p>No habits found</p>
       ) : (
+        
         habits.map((habit) => (
-          <div key={habit.id}>
-            <h3>{habit.title}</h3>
-            <p>{habit.createdAt.toDate().toLocaleString()}</p> {/* Assuming there's a createdAt field */}
-          </div>
+          <Card sx={{width: '300px', height: '75px'}}key={habit.id}>
+            <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
+            {habit.title}
+      </Typography>
+      <Button
+              variant="contained"
+              color="error"
+              onClick={() => deleteHabit(habit.id)}
+            >
+              Delete
+            </Button>
+            </Card>
         ))
       )}
-    </div>
+    </Container>
               <Container sx={{display: 'flex', alignItems: "center", justifyContent: "center",gap:'10px'}}> 
               <Typography variant="h6"> Add habit  </Typography>
               <Button variant="contained" sx={{ backgroundColor: '#FF4151'}} onClick={handleOpen}> + </Button>
