@@ -6,13 +6,14 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Link from "next/link";
-import { auth } from "./lib/firebaseConfig";
+import { auth, db } from "./lib/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { AuthProvider } from "./context/auth";
 import PrivateRoute from "./lib/PrivateRoute";
 import { User } from "firebase/auth";
 import { getApp } from "firebase/app";
 import { wrap } from "module";
+import { collection, addDoc } from "firebase/firestore";
 
 const Theme = createTheme({
   palette: {
@@ -40,18 +41,46 @@ export default function Home() {
  const [components, setComponents] = useState<JSX.Element[]>([]);
  const [user, setUser] = useState<User | null>(null);
  const [open, setOpen] = useState(false);
+ const [habitTitle, setHabitTitle] = useState('')
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const [value, setValue] = useState("");
 
+  const addHabitToFirestore = async () => {
+    if (!habitTitle.trim()) return; // Prevent adding empty habits
+
+    try {
+      await addDoc(collection(db, "habits"), {
+        title: habitTitle,
+        createdAt: new Date(),
+        userId: user?.uid
+      });
+      console.log("Habit added successfully!");
+      setHabitTitle(""); // Clear input after adding
+    } catch (error) {
+      console.error("Error adding habit:", error);
+    }
+  };
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value; // Extract input value safely
 
     if (/^\d*$/.test(inputValue) || inputValue === "") {
       setValue(inputValue); // Update state only if the input is valid
+      console.log(value)
     }
   };
+  const handleTitle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setHabitTitle(event.target.value); // Directly store the input value
+    console.log(habitTitle)
+  };
 
+  const handleAdd = () => {
+    addHabitToFirestore()
+
+    setValue('')
+    setHabitTitle('')
+    setOpen(false)
+  }
   useEffect(() => {
     // Track auth state
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -105,6 +134,8 @@ export default function Home() {
                               id="standard-basic"
                               label="Habit"
                               variant="standard"
+                              value={habitTitle}
+                              onChange={handleTitle}
                               sx={{width: '245px'}}
                             />
 
@@ -120,7 +151,7 @@ export default function Home() {
                             />                        
                 
                 </FormControl>
-                <Button variant="outlined"> Add </Button>
+                <Button variant="outlined" onClick={handleAdd}> Add </Button>
               </Box>
            </Modal>
                 
