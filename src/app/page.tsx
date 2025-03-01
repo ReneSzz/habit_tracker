@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, JSX } from "react";
-import { AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card  } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
 import HabitCard from "./card";
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
@@ -14,6 +14,7 @@ import { User } from "firebase/auth";
 import { getApp } from "firebase/app";
 import { wrap } from "module";
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
+import DeleteIcon from '@mui/icons-material/Delete'
 
 const Theme = createTheme({
   palette: {
@@ -213,17 +214,13 @@ export default function Home() {
       ) : (
         
         habits.map((habit) => (
-          <Card sx={{width: '300px', height: '75px'}}key={habit.id}>
+          <Card sx={{padding: '20px',width: '300px', height: '75px', display:'flex', alignItems: 'center', justifyContent: "space-between"}}key={habit.id}>
             <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
             {habit.title}
       </Typography>
-      <Button
-              variant="contained"
-              color="error"
-              onClick={() => deleteHabit(habit.id)}
-            >
-              Delete
-            </Button>
+      <IconButton color="error" onClick={() => deleteHabit(habit.id)}>
+  <DeleteIcon color="action" />
+</IconButton>
             </Card>
         ))
       )}
