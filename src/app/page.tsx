@@ -13,7 +13,7 @@ import PrivateRoute from "./lib/PrivateRoute";
 import { User } from "firebase/auth";
 import { getApp } from "firebase/app";
 import { wrap } from "module";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where  } from "firebase/firestore";
 
 const Theme = createTheme({
   palette: {
@@ -45,9 +45,30 @@ export default function Home() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const [value, setValue] = useState("");
+  const [habits, setHabits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const fetchHabits = async () => {
+    if (!user || !user.uid) return;
+    try {
+      const habitsRef = collection(db, 'users', user?.uid, 'habits');
+      const habitSnapshot = await getDocs(habitsRef);
+      const habitList = habitSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setHabits(habitList);
+    } catch (error) {
+      console.error("Error fetching habits: ", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchHabits(); // Fetch habits when component mounts
+  }, [user?.uid]);
 
   const addHabitToFirestore = async () => {
-    if (!habitTitle.trim()) return; // Prevent adding empty habits
     if (!habitTitle.trim() || !user || !user.uid) return;
     
     try {
@@ -57,6 +78,8 @@ export default function Home() {
         userId: user?.uid
       });
       console.log("Habit added successfully!");
+      fetchHabits()
+      
       setHabitTitle(""); // Clear input after adding
     } catch (error) {
       console.error("Error adding habit:", error);
@@ -152,7 +175,7 @@ export default function Home() {
                             />                        
                 
                 </FormControl>
-                <Button variant="outlined" onClick={handleAdd}> Add </Button>
+                <Button variant="outlined"  onClick={handleAdd}> Add </Button>
               </Box>
            </Modal>
                 
@@ -166,9 +189,22 @@ export default function Home() {
                 justifyContent: "center",
               }}
             >
+              <div>
+      <h2>Habits for User {user?.uid}</h2>
+      {habits.length === 0 ? (
+        <p>No habits found</p>
+      ) : (
+        habits.map((habit) => (
+          <div key={habit.id}>
+            <h3>{habit.title}</h3>
+            <p>{habit.createdAt.toDate().toLocaleString()}</p> {/* Assuming there's a createdAt field */}
+          </div>
+        ))
+      )}
+    </div>
               <Container sx={{display: 'flex', alignItems: "center", justifyContent: "center",gap:'10px'}}> 
               <Typography variant="h6"> Add habit  </Typography>
-              <Button variant="contained" onClick={handleOpen}> + </Button>
+              <Button variant="contained" sx={{ backgroundColor: '#FF4151'}} onClick={handleOpen}> + </Button>
               </Container>
               {/* {components.map((_, index) => (
                 <HabitCard key={index} />
