@@ -9,7 +9,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { AuthProvider } from "./context/auth";
 import PrivateRoute from "./lib/PrivateRoute";
 import { User } from "firebase/auth";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy, updateDoc, getDoc } from "firebase/firestore";
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -37,25 +37,62 @@ const style = {
 }
 
 export default function Home() {
- const [components, setComponents] = useState<JSX.Element[]>([]);
  const [user, setUser] = useState<User | null>(null);
  const [open, setOpen] = useState(false);
  const [habitTitle, setHabitTitle] = useState('')
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  const [value, setValue] = useState("");
-  const [habits, setHabits] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
-  const [progress, setProgress] = useState(30);
+const handleOpen = () => setOpen(true);
+const handleClose = () => setOpen(false);
+const [value, setValue] = useState("1");
+const [habits, setHabits] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
+const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
+const [progress, setProgress] = useState(0);
 
-  const increaseProgress = () => {
-    setProgress((prev) => Math.min(prev + 10, 100)); // Increment but max 100
-  };
-  const removeProgress = () => {
-    setProgress((prev) => Math.max(prev - 10, 0)); // Increment but max 100
-    handleMenuClose()
+const increaseProgress = async (habitId: string) => {
+  if (!user || !user.uid) return;
+  try {
+   if (habitId) {
+      const habitRef = doc(db, "users", user.uid, "habits", habitId);
+      const habitSnap = await getDoc(habitRef);
+      if (habitSnap.exists()) {
+        const habitData = habitSnap.data();  // Get the data from the document
+        const checked = habitData.checked;  // Access the 'checked' field 
+        if (checked == false) setProgress((prev) => Math.min(prev + 10, 100));
+
+      } 
+
+      await updateDoc(habitRef, { checked: true }); // Update 'checked' field to true
+      console.log("Habit marked as checked");
+
+      
+    }
+  } catch (error) {
+    console.error("Error increasing progress and marking habit as checked: ", error);
+  }
+};
+
+  const removeProgress = async (habitId: string) => {
+    if (!user || !user.uid) return;
+    try {
+     if (habitId) {
+        const habitRef = doc(db, "users", user.uid, "habits", habitId);
+        const habitSnap = await getDoc(habitRef);
+        if (habitSnap.exists()) {
+          const habitData = habitSnap.data();  // Get the data from the document
+          const checked = habitData.checked;  // Access the 'checked' field 
+          if (checked == true) setProgress((prev) => Math.max(prev - 10, 0));
+  
+        } 
+  
+        await updateDoc(habitRef, { checked: false }); // Update 'checked' field to true
+        console.log("Habit marked as checked");
+        
+      }
+    } catch (error) {
+      console.error("Error increasing progress and marking habit as checked: ", error);
+    }
+    finally{handleMenuClose()}
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, habitId: string) => {
@@ -109,7 +146,8 @@ export default function Home() {
       await addDoc(collection(db, 'users', user?.uid, "habits"), {
         title: habitTitle,
         createdAt: new Date(),
-        userId: user?.uid
+        userId: user?.uid,
+        checked: false
       });
       console.log("Habit added successfully!");
       fetchHabits()
@@ -118,6 +156,20 @@ export default function Home() {
       console.error("Error adding habit:", error);
     }
   };
+
+  const markHabitChecked = async (habitId: string) => {
+    if (!habitId) return; // Exit if no habitId is provided
+    if (!user || !user.uid) return;
+  
+    try {
+      const habitRef = doc(db, "users", user.uid, "habits", habitId); // Reference to the habit document
+      await updateDoc(habitRef, { checked: true }); // Update the 'checked' field to true
+      console.log("Habit marked as checked");
+    } catch (error) {
+      console.error("Error marking habit as checked: ", error);
+    }
+  };
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value; // Extract input value safely
 
@@ -157,7 +209,6 @@ export default function Home() {
 
   return (
     <>
-
       <AuthProvider>
         <PrivateRoute>
           <ThemeProvider theme={Theme}>
@@ -168,11 +219,16 @@ export default function Home() {
                     Habit Tracker
                   </Typography>
                 </Link>
-               <Box sx={{display: 'flex', alignItems: 'center', gap: '15px'}}> 
-                <LinearProgress variant="determinate" value={progress} sx={{ width: '800px', height: 10, borderRadius: 5 }} />
-        <Typography>{progress}%</Typography>
-        </Box>
-
+  
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={progress}
+                    sx={{ width: '800px', height: 10, borderRadius: 5 }}
+                  />
+                  <Typography>{progress}%</Typography>
+                </Box>
+  
                 {user ? (
                   <Button onClick={handleSignOut}>Sign Out</Button>
                 ) : (
@@ -182,42 +238,38 @@ export default function Home() {
                 )}
               </Toolbar>
             </AppBar>
-
+  
             <Modal
               open={open}
               onClose={handleClose}
               aria-labelledby="modal-modal-title"
               aria-describedby="modal-modal-description"
-              >
-              <Box sx={style }>
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                   Create a new habit
-                  </Typography>
-                <TextField               
-                              id="standard-basic"
-                              label="Habit"
-                              variant="standard"
-                              value={habitTitle}
-                              onChange={handleTitle}
-                              sx={{width: '245px'}}
-                            />
-
-                            <FormControl> 
-
-
-                            <TextField
-                              label="Times per day"
-                              type="text" // Using text to allow full control over input validation
-                              value={value}
-                              onChange={handleChange}
-                              sx={{width: '245px'}}
-                            />                        
-                
+            >
+              <Box sx={style}>
+                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                  Create a new habit
+                </Typography>
+                <TextField
+                  id="standard-basic"
+                  label="Habit"
+                  variant="standard"
+                  value={habitTitle}
+                  onChange={handleTitle}
+                  sx={{ width: '245px' }}
+                />
+                <FormControl>
+                  <TextField
+                    label="Times per day"
+                    type="text" // Using text to allow full control over input validation
+                    value={value}
+                    onChange={handleChange}
+                    sx={{ width: '245px' }}
+                  />
                 </FormControl>
-                <Button variant="outlined"  onClick={handleAdd}> Add </Button>
+                <Button variant="outlined" onClick={handleAdd}> Add </Button>
               </Box>
-           </Modal>
-                
+            </Modal>
+  
             <Container
               sx={{
                 height: "86vh",
@@ -226,64 +278,77 @@ export default function Home() {
                 gap: 2,
                 paddingTop: '30px',
                 alignItems: 'flex-start'
-                
               }}
             >
-              <Container sx={{display: "flex",
-                flexWrap: "wrap",
-                gap: 2,
-                
-            }}>
-      {habits.length === 0 ? (
-        <p>No habits found</p>
-      ) : (
-        
-        habits.map((habit) => (
-          <Card sx={{padding: '20px',width: '300px', height: '75px', display:'flex', alignItems: 'center', justifyContent: "space-between"}}key={habit.id}>
-            <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14,whiteSpace: "nowrap", 
-      overflow: "hidden", 
-      textOverflow: 'clip', 
-      flex: 1 }}>
-            {habit.title}
-      </Typography>
-      <Box sx={{display: 'flex', alignItems: 'center', justifyContent: "center"}}> 
-      <Button onClick={increaseProgress} sx={{}}>
-        ✔
-      </Button>
-      <IconButton onClick={(event) => handleMenuOpen(event, habit.id)}>
-              <MoreVertIcon />
-            </IconButton>
-            
-
-            {/* Dropdown Menu */}
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem onClick={() => deleteHabit()}>
-                <DeleteIcon sx={{ marginRight: 1 }} /> Delete
-              </MenuItem>
-              <MenuItem onClick={() => removeProgress()}>
-                 Undo
-              </MenuItem>
-            </Menu>
-            </Box>
-            </Card>
-        ))
-      )}
-    </Container>
-              
+              <Container sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                {habits.length === 0 ? (
+                  <p>No habits found</p>
+                ) : (
+                  habits.map((habit) => (
+                    <Card
+                      sx={{
+                        padding: '20px',
+                        width: '300px',
+                        height: '75px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: "space-between"
+                      }}
+                      key={habit.id}
+                    >
+                      <Typography
+                        gutterBottom
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: 14,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: 'clip',
+                          flex: 1
+                        }}
+                      >
+                        {habit.title}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: "center" }}>
+                        <Button onClick={() => increaseProgress(habit.id)} sx={{}}>
+                          ✔
+                        </Button>
+  
+                        <IconButton onClick={(event) => handleMenuOpen(event, habit.id)}>
+                          <MoreVertIcon />
+                        </IconButton>
+  
+                        {/* Dropdown Menu */}
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl)}
+                          onClose={handleMenuClose}
+                        >
+                          <MenuItem onClick={() => removeProgress(habit.id)}>
+                            Undo
+                          </MenuItem>
+                          
+                          <MenuItem onClick={() => deleteHabit()}>
+                          Delete
+                          </MenuItem>
+                          
+                        </Menu>
+                      </Box>
+                    </Card>
+                  ))
+                )}
+              </Container>
+  
               {/* {components.map((_, index) => (
                 <HabitCard key={index} />
               ))} */}
-
-
+  
             </Container>
-            <Container sx={{display: 'flex', alignItems: "center", justifyContent: "center",gap:'10px'}}> 
-              <Typography variant="h6"> Add habit  </Typography>
-              <Button variant="contained" sx={{ backgroundColor: '#FF4151'}} onClick={handleOpen}> + </Button>
-              </Container>
+  
+            <Container sx={{ display: 'flex', alignItems: "center", justifyContent: "center", gap: '10px' }}>
+              <Typography variant="h6"> Add habit </Typography>
+              <Button variant="contained" sx={{ backgroundColor: '#FF4151' }} onClick={handleOpen}> + </Button>
+            </Container>
           </ThemeProvider>
         </PrivateRoute>
       </AuthProvider>
