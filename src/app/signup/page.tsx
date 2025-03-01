@@ -26,7 +26,7 @@ const darkTheme = createTheme({
           console.log('User signed up');
   
           // Redirect to dashboard after successful sign-up
-          router.push('/'); // Next.js redirect
+          router.push('/login'); // Next.js redirect
         } catch (error) {
           if (error instanceof Error) {
             console.error('Error signing up:', error.message);
