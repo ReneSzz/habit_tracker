@@ -48,9 +48,10 @@ export default function Home() {
 
   const addHabitToFirestore = async () => {
     if (!habitTitle.trim()) return; // Prevent adding empty habits
-
+    if (!habitTitle.trim() || !user || !user.uid) return;
+    
     try {
-      await addDoc(collection(db, "habits"), {
+      await addDoc(collection(db, 'users', user?.uid, "habits"), {
         title: habitTitle,
         createdAt: new Date(),
         userId: user?.uid
