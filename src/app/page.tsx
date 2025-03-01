@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, JSX } from "react";
-import { AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
+import {  Menu , AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
 import HabitCard from "./card";
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
@@ -15,6 +15,8 @@ import { getApp } from "firebase/app";
 import { wrap } from "module";
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import DeleteIcon from '@mui/icons-material/Delete'
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+
 
 const Theme = createTheme({
   palette: {
@@ -48,13 +50,28 @@ export default function Home() {
   const [value, setValue] = useState("");
   const [habits, setHabits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
 
-  const deleteHabit = async (habitId: string) => {
+  
+  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, habitId: string) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedHabit(habitId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedHabit(null);
+  };
+
+  const deleteHabit = async () => {
     if (!user || !user.uid) return;
+    if (!selectedHabit) return;
     try {
-      const habitDoc = doc(db, 'users', user?.uid, 'habits', habitId);
+      const habitDoc = doc(db, 'users', user?.uid, 'habits', selectedHabit);
       await deleteDoc(habitDoc);
-      fetchHabits(); // Refresh habits after deletion
+      handleMenuClose();
+      fetchHabits(); // Refresh habits after deletio
     } catch (error) {
       console.error("Error deleting habit: ", error);
     }
@@ -218,9 +235,20 @@ export default function Home() {
             <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
             {habit.title}
       </Typography>
-      <IconButton color="error" onClick={() => deleteHabit(habit.id)}>
-  <DeleteIcon color="action" />
-</IconButton>
+      <IconButton onClick={(event) => handleMenuOpen(event, habit.id)}>
+              <MoreVertIcon />
+            </IconButton>
+
+            {/* Dropdown Menu */}
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={() => deleteHabit()}>
+                <DeleteIcon sx={{ marginRight: 1 }} /> Delete
+              </MenuItem>
+            </Menu>
             </Card>
         ))
       )}
