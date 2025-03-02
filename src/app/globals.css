@@ -16,7 +16,7 @@ body {
   overflow-x: hidden;
 }
 a {
-  color: rgb(17, 131, 213) !important
+  color: #40a2f7 !important
 }
 body {
   color: var(--foreground);

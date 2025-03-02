@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, JSX } from "react";
-import {  LinearProgress,Menu , AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
+import {  Tooltip,LinearProgress,Menu , AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { AuthProvider } from "./context/auth";
 import PrivateRoute from "./lib/PrivateRoute";
 import { User } from "firebase/auth";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy, updateDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy, updateDoc, getDoc, writeBatch,setDoc } from "firebase/firestore";
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -19,12 +19,11 @@ const Theme = createTheme({
     mode: "light",
   },
 });
-
 interface Habit {
   id: string;
   title: string;
-  checked: boolean; // Ensure checked is included
-  // Add other fields if needed
+  checked: boolean;
+  lastChecked: string;  // Add this field to match the Firestore field
 }
 const style = {
   position: 'absolute',
@@ -64,24 +63,27 @@ const increaseProgress = async (habitId: string) => {
     if (habitSnap.exists()) {
       const habitData = habitSnap.data();
       const checked = habitData?.checked;
+      const currentDate = new Date().toISOString().split('T')[0];
 
       // Only update if it's not already checked
       if (!checked) {
         // Update Firestore: Mark the habit as checked
-        await updateDoc(habitRef, { checked: true });
+        await updateDoc(habitRef, { checked: true, lastChecked: currentDate });
 
         // Update local state
         const updatedHabits = habits.map((habit) =>
-          habit.id === habitId ? { ...habit, checked: true } : habit
+          habit.id === habitId ? { ...habit, checked: true, lastChecked: currentDate } : habit
         );
         setHabits(updatedHabits);
 
         // Recalculate progress
-        const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
-        const totalHabits = updatedHabits.length;
-        const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
-        setProgress(newProgress);
+ 
 
+        
+      const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
+      const totalHabits = updatedHabits.length;
+      const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
+      setProgress(newProgress);
         console.log(`Updated progress: ${newProgress}%`);
       } else {
         console.log("Habit already checked");
@@ -113,10 +115,11 @@ const removeProgress = async () => {
 
       // Update the 'checked' field to false in Firestore
       await updateDoc(habitRef, { checked: false });
+      const currentDate = new Date().toISOString().split('T')[0];
 
       // Update the local state immediately
       const updatedHabits = habits.map((habit) =>
-        habit.id === selectedHabit ? { ...habit, checked: false } : habit
+        habit.id === selectedHabit ? { ...habit, checked: false, lastChecked: 'Never' } : habit
       );
       setHabits(updatedHabits);
 
@@ -168,7 +171,6 @@ const removeProgress = async () => {
     if (!user || !user.uid) return;
   
     try {
-      // Query to order habits by 'createdAt' field in ascending order
       const habitsRef = collection(db, "users", user.uid, "habits");
       const habitQuery = query(habitsRef, orderBy("createdAt", "desc")); // Ascending order
   
@@ -178,19 +180,43 @@ const removeProgress = async () => {
         id: doc.id,
       }));
   
-      setHabits(habitList);
-      const checkedHabits = habitList.filter((habit) => habit.checked).length;
-      const totalHabits = habitList.length;
+      // Get the current date and format it as YYYY-MM-DD
+      const currentDate = new Date().toISOString().split('T')[0]; // "2025-03-02"
   
-      // Calculate the progress percentage and round it
-      const calculatedProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0;
-      setProgress(calculatedProgress);
+      // Check the last checked date for each habit
+      const updatedHabits = habitList.map((habit) => {
+        if (habit.lastChecked !== currentDate) {
+          // Update the checked status and lastChecked date
+          return { ...habit, checked: false};
+        }
+        return habit;
+      });
+  
+      // Update the local state with the modified habits
+      setHabits(updatedHabits);
+  
+      // Update Firestore if needed (optional)
+      const batch = writeBatch(db);
+      updatedHabits.forEach((habit) => {
+        const habitRef = doc(db, "users", user.uid, "habits", habit.id);
+        batch.update(habitRef, { checked: habit.checked, lastChecked: habit.lastChecked });
+      });
+      await batch.commit();
+      const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
+      const totalHabits = updatedHabits.length;
+      const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
+      setProgress(newProgress);
+  
+      console.log("Habits processed and updated.");
     } catch (error) {
       console.error("Error fetching habits: ", error);
     } finally {
       setLoading(false);
     }
   };
+  
+  
+  
   
   useEffect(() => {
     fetchHabits(); // Fetch habits when component mounts or user changes
@@ -204,7 +230,8 @@ const removeProgress = async () => {
         title: habitTitle,
         createdAt: new Date(),
         userId: user?.uid,
-        checked: false
+        checked: false,
+        lastChecked: ''
       });
       console.log("Habit added successfully!");
       fetchHabits()
@@ -214,14 +241,6 @@ const removeProgress = async () => {
     }
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = event.target.value; // Extract input value safely
-
-    if (/^\d*$/.test(inputValue) || inputValue === "") {
-      setValue(inputValue); // Update state only if the input is valid
-      console.log(value)
-    }
-  };
   const handleTitle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setHabitTitle(event.target.value); // Directly store the input value
     console.log(habitTitle)
@@ -301,19 +320,11 @@ const removeProgress = async () => {
                   onChange={handleTitle}
                   sx={{ width: '245px' }}
                 />
-                <FormControl>
-                  <TextField
-                    label="Times per day"
-                    type="text" // Using text to allow full control over input validation
-                    value={value}
-                    onChange={handleChange}
-                    sx={{ width: '245px' }}
-                  />
-                </FormControl>
                 <Button variant="outlined" onClick={handleAdd}> Add </Button>
               </Box>
             </Modal>
-  
+            <Container>
+         
             <Container
               sx={{
                 height: "86vh",
@@ -358,12 +369,16 @@ const removeProgress = async () => {
                         <Button onClick={() => increaseProgress(habit.id)} sx={{}}>
                           ✔
                         </Button>
-  
+                        <Tooltip title={`Last completed: ${habit.lastChecked}`}>
                         <IconButton onClick={(event) => handleMenuOpen(event, habit.id)}>
                           <MoreVertIcon />
                         </IconButton>
+                        </Tooltip>
+                        
+                        
   
                         {/* Dropdown Menu */}
+                       
                         <Menu
                           anchorEl={anchorEl}
                           open={Boolean(anchorEl)}
@@ -378,7 +393,9 @@ const removeProgress = async () => {
                           </MenuItem>
                           
                         </Menu>
+                       
                       </Box>
+                      
                     </Card>
                   ))
                 )}
@@ -387,6 +404,7 @@ const removeProgress = async () => {
               {/* {components.map((_, index) => (
                 <HabitCard key={index} />
               ))} */}
+               </Container>
   
             </Container>
   
