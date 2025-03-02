@@ -20,7 +20,12 @@ const Theme = createTheme({
   },
 });
 
-
+interface Habit {
+  id: string;
+  title: string;
+  checked: boolean; // Ensure checked is included
+  // Add other fields if needed
+}
 const style = {
   position: 'absolute',
   top: '50%',
@@ -51,49 +56,90 @@ const [progress, setProgress] = useState(0);
 
 const increaseProgress = async (habitId: string) => {
   if (!user || !user.uid) return;
+
   try {
-   if (habitId) {
-      const habitRef = doc(db, "users", user.uid, "habits", habitId);
-      const habitSnap = await getDoc(habitRef);
-      if (habitSnap.exists()) {
-        const habitData = habitSnap.data();  // Get the data from the document
-        const checked = habitData.checked;  // Access the 'checked' field 
-        if (checked == false) setProgress((prev) => Math.min(prev + 10, 100));
+    const habitRef = doc(db, "users", user.uid, "habits", habitId);
+    const habitSnap = await getDoc(habitRef);
 
-      } 
+    if (habitSnap.exists()) {
+      const habitData = habitSnap.data();
+      const checked = habitData?.checked;
 
-      await updateDoc(habitRef, { checked: true }); // Update 'checked' field to true
-      console.log("Habit marked as checked");
+      // Only update if it's not already checked
+      if (!checked) {
+        // Update Firestore: Mark the habit as checked
+        await updateDoc(habitRef, { checked: true });
 
-      
+        // Update local state
+        const updatedHabits = habits.map((habit) =>
+          habit.id === habitId ? { ...habit, checked: true } : habit
+        );
+        setHabits(updatedHabits);
+
+        // Recalculate progress
+        const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
+        const totalHabits = updatedHabits.length;
+        const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
+        setProgress(newProgress);
+
+        console.log(`Updated progress: ${newProgress}%`);
+      } else {
+        console.log("Habit already checked");
+      }
+    } else {
+      console.log("Habit not found in Firestore");
     }
   } catch (error) {
     console.error("Error increasing progress and marking habit as checked: ", error);
   }
 };
 
-  const removeProgress = async (habitId: string) => {
-    if (!user || !user.uid) return;
-    try {
-     if (habitId) {
-        const habitRef = doc(db, "users", user.uid, "habits", habitId);
-        const habitSnap = await getDoc(habitRef);
-        if (habitSnap.exists()) {
-          const habitData = habitSnap.data();  // Get the data from the document
-          const checked = habitData.checked;  // Access the 'checked' field 
-          if (checked == true) setProgress((prev) => Math.max(prev - 10, 0));
-  
-        } 
-  
-        await updateDoc(habitRef, { checked: false }); // Update 'checked' field to true
-        console.log("Habit marked as checked");
-        
+const removeProgress = async () => {
+  if (!user || !user.uid || !selectedHabit) return; // Ensure selectedHabit is valid
+
+  try {
+    const habitRef = doc(db, "users", user.uid, "habits", selectedHabit);
+    const habitSnap = await getDoc(habitRef);
+
+    if (habitSnap.exists()) {
+      const habitData = habitSnap.data();
+      const checked = habitData?.checked;
+
+      // If the habit is unchecked or doesn't exist, return early
+      if (checked === undefined || !checked) {
+        console.log("Habit is already unchecked or checked doesn't exist");
+        return;
       }
-    } catch (error) {
-      console.error("Error increasing progress and marking habit as checked: ", error);
+
+      // Update the 'checked' field to false in Firestore
+      await updateDoc(habitRef, { checked: false });
+
+      // Update the local state immediately
+      const updatedHabits = habits.map((habit) =>
+        habit.id === selectedHabit ? { ...habit, checked: false } : habit
+      );
+      setHabits(updatedHabits);
+
+      // Recalculate progress
+      const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
+      const totalHabits = updatedHabits.length;
+      const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
+      setProgress(newProgress);
+
+      console.log("Progress removed and habit unchecked");
+    } else {
+      console.log("Habit not found in Firestore");
     }
-    finally{handleMenuClose()}
-  };
+  } catch (error) {
+    console.error("Error removing progress: ", error);
+  } finally {
+    handleMenuClose(); // Close the menu after action is completed
+  }
+};
+
+
+
+
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, habitId: string) => {
     setAnchorEl(event.currentTarget);
@@ -120,23 +166,34 @@ const increaseProgress = async (habitId: string) => {
   
   const fetchHabits = async () => {
     if (!user || !user.uid) return;
+  
     try {
+      // Query to order habits by 'createdAt' field in ascending order
       const habitsRef = collection(db, "users", user.uid, "habits");
-      const q = query(habitsRef, orderBy("createdAt", "desc")); // Order by 'createdAt' field (newest first)
-      const habitSnapshot = await getDocs(q);
+      const habitQuery = query(habitsRef, orderBy("createdAt", "desc")); // Ascending order
+  
+      const habitSnapshot = await getDocs(habitQuery);
       const habitList = habitSnapshot.docs.map((doc) => ({
+        ...doc.data() as Habit,
         id: doc.id,
-        ...doc.data(),
       }));
+  
       setHabits(habitList);
+      const checkedHabits = habitList.filter((habit) => habit.checked).length;
+      const totalHabits = habitList.length;
+  
+      // Calculate the progress percentage and round it
+      const calculatedProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0;
+      setProgress(calculatedProgress);
     } catch (error) {
       console.error("Error fetching habits: ", error);
     } finally {
       setLoading(false);
     }
   };
+  
   useEffect(() => {
-    fetchHabits(); // Fetch habits when component mounts
+    fetchHabits(); // Fetch habits when component mounts or user changes
   }, [user?.uid]);
 
   const addHabitToFirestore = async () => {
@@ -154,19 +211,6 @@ const increaseProgress = async (habitId: string) => {
       setHabitTitle(""); // Clear input after adding
     } catch (error) {
       console.error("Error adding habit:", error);
-    }
-  };
-
-  const markHabitChecked = async (habitId: string) => {
-    if (!habitId) return; // Exit if no habitId is provided
-    if (!user || !user.uid) return;
-  
-    try {
-      const habitRef = doc(db, "users", user.uid, "habits", habitId); // Reference to the habit document
-      await updateDoc(habitRef, { checked: true }); // Update the 'checked' field to true
-      console.log("Habit marked as checked");
-    } catch (error) {
-      console.error("Error marking habit as checked: ", error);
     }
   };
 
@@ -288,11 +332,12 @@ const increaseProgress = async (habitId: string) => {
                     <Card
                       sx={{
                         padding: '20px',
-                        width: '300px',
+                        width: '260px',
                         height: '75px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: "space-between"
+                        justifyContent: "space-between",
+                        backgroundColor: habit.checked ? '#a2d5f8 ' : 'lightcoral',
                       }}
                       key={habit.id}
                     >
@@ -324,7 +369,7 @@ const increaseProgress = async (habitId: string) => {
                           open={Boolean(anchorEl)}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={() => removeProgress(habit.id)}>
+                          <MenuItem onClick={() => removeProgress()}>
                             Undo
                           </MenuItem>
                           
