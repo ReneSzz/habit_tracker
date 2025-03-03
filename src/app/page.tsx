@@ -1,241 +1,243 @@
 "use client";
+
 import { useState, useEffect, JSX } from "react";
-import {  Tooltip,LinearProgress,Menu , AppBar, Toolbar, Typography, Button, Container, createTheme, ThemeProvider, Modal, Box, TextField, Select, Card, IconButton  } from "@mui/material";
-import FormControl from '@mui/material/FormControl';
-import MenuItem from '@mui/material/MenuItem';
+import {
+  Tooltip,
+  LinearProgress,
+  Menu,
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  createTheme,
+  ThemeProvider,
+  Modal,
+  Box,
+  TextField,
+  Select,
+  Card,
+  IconButton,
+} from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import MenuItem from "@mui/material/MenuItem";
 import Link from "next/link";
 import { auth, db } from "./lib/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { AuthProvider } from "./context/auth";
 import PrivateRoute from "./lib/PrivateRoute";
 import { User } from "firebase/auth";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, orderBy, updateDoc, getDoc, writeBatch,setDoc } from "firebase/firestore";
-import DeleteIcon from '@mui/icons-material/Delete'
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+  orderBy,
+  updateDoc,
+  getDoc,
+  writeBatch,
+  setDoc,
+} from "firebase/firestore";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 
+// Theme configuration
 const Theme = createTheme({
   palette: {
     mode: "light",
   },
 });
+
+// Habit interface
 interface Habit {
   id: string;
   title: string;
   checked: boolean;
-  lastChecked: string;  // Add this field to match the Firestore field
+  lastChecked: string;
 }
+
+// Modal styling
 const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
   width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
+  bgcolor: "background.paper",
+  border: "2px solid #000",
   boxShadow: 24,
   p: 4,
   display: "flex",
-  flexDirection: 'column',
-  gap: '10px'
-}
+  flexDirection: "column",
+  gap: "10px",
+};
 
 export default function Home() {
- const [user, setUser] = useState<User | null>(null);
- const [open, setOpen] = useState(false);
- const [habitTitle, setHabitTitle] = useState('')
-const handleOpen = () => setOpen(true);
-const handleClose = () => setOpen(false);
-const [value, setValue] = useState("1");
-const [habits, setHabits] = useState<any[]>([]);
-const [loading, setLoading] = useState(true);
-const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
-const [progress, setProgress] = useState(0);
+  // State variables
+  const [user, setUser] = useState<User | null>(null);
+  const [open, setOpen] = useState(false);
+  const [habitTitle, setHabitTitle] = useState("");
+  const [value, setValue] = useState("1");
+  const [habits, setHabits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
-const increaseProgress = async (habitId: string) => {
-  if (!user || !user.uid) return;
+  // Modal open/close handlers
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
-  try {
-    const habitRef = doc(db, "users", user.uid, "habits", habitId);
-    const habitSnap = await getDoc(habitRef);
-
-    if (habitSnap.exists()) {
-      const habitData = habitSnap.data();
-      const checked = habitData?.checked;
-      const currentDate = new Date().toISOString().split('T')[0];
-
-      // Only update if it's not already checked
-      if (!checked) {
-        // Update Firestore: Mark the habit as checked
-        await updateDoc(habitRef, { checked: true, lastChecked: currentDate });
-
-        // Update local state
-        const updatedHabits = habits.map((habit) =>
-          habit.id === habitId ? { ...habit, checked: true, lastChecked: currentDate } : habit
-        );
-        setHabits(updatedHabits);
-
-        // Recalculate progress
- 
-
-        
-      const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
-      const totalHabits = updatedHabits.length;
-      const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
-      setProgress(newProgress);
-        console.log(`Updated progress: ${newProgress}%`);
-      } else {
-        console.log("Habit already checked");
-      }
-    } else {
-      console.log("Habit not found in Firestore");
-    }
-  } catch (error) {
-    console.error("Error increasing progress and marking habit as checked: ", error);
-  }
-};
-
-const removeProgress = async () => {
-  if (!user || !user.uid || !selectedHabit) return; // Ensure selectedHabit is valid
-
-  try {
-    const habitRef = doc(db, "users", user.uid, "habits", selectedHabit);
-    const habitSnap = await getDoc(habitRef);
-
-    if (habitSnap.exists()) {
-      const habitData = habitSnap.data();
-      const checked = habitData?.checked;
-
-      // If the habit is unchecked or doesn't exist, return early
-      if (checked === undefined || !checked) {
-        console.log("Habit is already unchecked or checked doesn't exist");
-        return;
-      }
-
-      // Update the 'checked' field to false in Firestore
-      await updateDoc(habitRef, { checked: false });
-      const currentDate = new Date().toISOString().split('T')[0];
-
-      // Update the local state immediately
-      const updatedHabits = habits.map((habit) =>
-        habit.id === selectedHabit ? { ...habit, checked: false, lastChecked: 'Never' } : habit
-      );
-      setHabits(updatedHabits);
-
-      // Recalculate progress
-      const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
-      const totalHabits = updatedHabits.length;
-      const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
-      setProgress(newProgress);
-
-      console.log("Progress removed and habit unchecked");
-    } else {
-      console.log("Habit not found in Firestore");
-    }
-  } catch (error) {
-    console.error("Error removing progress: ", error);
-  } finally {
-    handleMenuClose(); // Close the menu after action is completed
-  }
-};
-
-
-
-
-
+  // Handles opening the menu for a specific habit
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, habitId: string) => {
     setAnchorEl(event.currentTarget);
     setSelectedHabit(habitId);
   };
 
+  // Closes the menu
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedHabit(null);
   };
 
-  const deleteHabit = async () => {
+  // Function to increase habit progress
+  const increaseProgress = async (habitId: string) => {
     if (!user || !user.uid) return;
-    if (!selectedHabit) return;
+
     try {
-      const habitDoc = doc(db, 'users', user?.uid, 'habits', selectedHabit);
-      await deleteDoc(habitDoc);
-      handleMenuClose();
-      fetchHabits(); // Refresh habits after deletio
+      const habitRef = doc(db, "users", user.uid, "habits", habitId);
+      const habitSnap = await getDoc(habitRef);
+
+      if (habitSnap.exists()) {
+        const habitData = habitSnap.data();
+        const checked = habitData?.checked;
+        const currentDate = new Date().toISOString().split("T")[0];
+
+        if (!checked) {
+          await updateDoc(habitRef, { checked: true, lastChecked: currentDate });
+
+          const updatedHabits = habits.map((habit) =>
+            habit.id === habitId ? { ...habit, checked: true, lastChecked: currentDate } : habit
+          );
+          setHabits(updatedHabits);
+
+          // Recalculate progress
+          const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
+          const totalHabits = updatedHabits.length;
+          setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
+        }
+      }
     } catch (error) {
-      console.error("Error deleting habit: ", error);
+      console.error("Error increasing progress:", error);
     }
   };
-  
+
+  // Function to remove progress from a habit
+  const removeProgress = async () => {
+    if (!user || !user.uid || !selectedHabit) return;
+
+    try {
+      const habitRef = doc(db, "users", user.uid, "habits", selectedHabit);
+      const habitSnap = await getDoc(habitRef);
+
+      if (habitSnap.exists()) {
+        await updateDoc(habitRef, { checked: false });
+
+        const updatedHabits = habits.map((habit) =>
+          habit.id === selectedHabit ? { ...habit, checked: false} : habit
+        );
+        setHabits(updatedHabits);
+
+        // Recalculate progress
+        const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
+        const totalHabits = updatedHabits.length;
+        setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
+      }
+    } catch (error) {
+      console.error("Error removing progress:", error);
+    } finally {
+      handleMenuClose();
+    }
+  };
+
+  // Deletes a habit from Firestore
+  const deleteHabit = async () => {
+    if (!user || !user.uid || !selectedHabit) return;
+
+    try {
+      const habitDoc = doc(db, "users", user.uid, "habits", selectedHabit);
+      await deleteDoc(habitDoc);
+      handleMenuClose();
+      fetchHabits();
+    } catch (error) {
+      console.error("Error deleting habit:", error);
+    }
+  };
+
+  // Fetch habits from Firestore
   const fetchHabits = async () => {
     if (!user || !user.uid) return;
-  
+
     try {
       const habitsRef = collection(db, "users", user.uid, "habits");
-      const habitQuery = query(habitsRef, orderBy("createdAt", "desc")); // Ascending order
-  
+      const habitQuery = query(habitsRef, orderBy("createdAt", "desc"));
+
       const habitSnapshot = await getDocs(habitQuery);
       const habitList = habitSnapshot.docs.map((doc) => ({
         ...doc.data() as Habit,
         id: doc.id,
       }));
-  
-      // Get the current date and format it as YYYY-MM-DD
-      const currentDate = new Date().toISOString().split('T')[0]; // "2025-03-02"
-  
-      // Check the last checked date for each habit
+
+      const currentDate = new Date().toISOString().split("T")[0];
+
       const updatedHabits = habitList.map((habit) => {
         if (habit.lastChecked !== currentDate) {
-          // Update the checked status and lastChecked date
-          return { ...habit, checked: false};
+          return { ...habit, checked: false };
         }
         return habit;
       });
-  
-      // Update the local state with the modified habits
+
       setHabits(updatedHabits);
-  
-      // Update Firestore if needed (optional)
+
+      // Update Firestore
       const batch = writeBatch(db);
       updatedHabits.forEach((habit) => {
         const habitRef = doc(db, "users", user.uid, "habits", habit.id);
         batch.update(habitRef, { checked: habit.checked, lastChecked: habit.lastChecked });
       });
       await batch.commit();
+
       const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
       const totalHabits = updatedHabits.length;
-      const newProgress = totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0; // Round to nearest whole number
-      setProgress(newProgress);
-  
-      console.log("Habits processed and updated.");
+      setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
     } catch (error) {
-      console.error("Error fetching habits: ", error);
+      console.error("Error fetching habits:", error);
     } finally {
       setLoading(false);
     }
   };
-  
-  
-  
-  
+
   useEffect(() => {
-    fetchHabits(); // Fetch habits when component mounts or user changes
+    fetchHabits();
   }, [user?.uid]);
 
+  // Adds a new habit to Firestore
   const addHabitToFirestore = async () => {
     if (!habitTitle.trim() || !user || !user.uid) return;
-    
+
     try {
-      await addDoc(collection(db, 'users', user?.uid, "habits"), {
+      await addDoc(collection(db, "users", user.uid, "habits"), {
         title: habitTitle,
         createdAt: new Date(),
-        userId: user?.uid,
+        userId: user.uid,
         checked: false,
-        lastChecked: ''
+        lastChecked: "",
       });
-      console.log("Habit added successfully!");
-      fetchHabits()
-      setHabitTitle(""); // Clear input after adding
+      fetchHabits();
+      setHabitTitle("");
     } catch (error) {
       console.error("Error adding habit:", error);
     }
@@ -400,10 +402,7 @@ const removeProgress = async () => {
                   ))
                 )}
               </Container>
-  
-              {/* {components.map((_, index) => (
-                <HabitCard key={index} />
-              ))} */}
+          
                </Container>
   
             </Container>
