@@ -346,7 +346,7 @@ export default function Home() {
                       sx={{
                         padding: '20px',
                         width: '260px',
-                        height: '75px',
+                        minHeight: '75px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: "space-between",
@@ -359,9 +359,8 @@ export default function Home() {
                         sx={{
                           color: 'text.secondary',
                           fontSize: 14,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: 'clip',
+                          wordBreak: "break-word", 
+                          overflowWrap: "break-word",
                           flex: 1
                         }}
                       >
