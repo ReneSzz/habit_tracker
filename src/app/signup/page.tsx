@@ -16,8 +16,15 @@ const darkTheme = createTheme({
   export default function SignUpPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const router = useRouter();
-  
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+      if (event.key === "Enter") {
+        handleSignUp();
+      }
+    };
+
     const handleSignUp = async () => {
       if (email && password) {
         try {
@@ -29,11 +36,11 @@ const darkTheme = createTheme({
           router.push('/login'); // Next.js redirect
         } catch (error) {
           if (error instanceof Error) {
-            console.error('Error signing up:', error.message);
+            setError(error.message);
           }
         }
       } else {
-        console.error('Please fill in both fields');
+        setError('Fill both fields');
       }
     };
   
@@ -44,7 +51,9 @@ const darkTheme = createTheme({
             <Link href="/" passHref>
               <Typography variant="h6">Habit Tracker</Typography>
             </Link>
-            <Button>Sign Up</Button>
+            <Link href="/signup" passHref>
+          <Button>Sign Up</Button>
+          </Link>
           </Toolbar>
         </AppBar>
   
@@ -72,6 +81,7 @@ const darkTheme = createTheme({
               label="Email"
               variant="standard"
               sx={{width: '355px'}}
+              onKeyDown={handleKeyDown}
             />
             <TextField
               onChange={(e) => setPassword(e.target.value)}
@@ -80,10 +90,16 @@ const darkTheme = createTheme({
               variant="standard"
               type="password"
               sx={{width: '355px'}}
+              onKeyDown={handleKeyDown}
             />
             <Button variant="outlined" sx={{ fontWeight: 'bold',width: "250px" }} onClick={handleSignUp}>
               Create account
             </Button>
+            {error && (
+            <Typography color="error" align="center">
+              {error}
+            </Typography>
+          )}
             <Typography sx={{ fontWeight: 'bold' }} align="center" gutterBottom>
               Already have an account? <a href="/login">Log in</a>
             </Typography>

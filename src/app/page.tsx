@@ -42,6 +42,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import Stack from '@mui/material/Stack';
 
 
 // Theme configuration
@@ -91,6 +92,7 @@ export default function Home() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  
   // Handles opening the menu for a specific habit
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, habitId: string) => {
     setAnchorEl(event.currentTarget);
@@ -286,11 +288,13 @@ export default function Home() {
                 </Link>
   
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <Stack sx={{ width: '100%', color: 'grey.500' }} spacing={2}>
                   <LinearProgress
                     variant="determinate"
                     value={progress}
                     sx={{ width: '800px', height: 10, borderRadius: 5 }}
                   />
+                   </Stack>
                   <Typography>{progress}%</Typography>
                 </Box>
   

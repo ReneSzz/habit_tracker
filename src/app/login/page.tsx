@@ -31,6 +31,12 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter") {
+      handleSignIn();
+    }
+  };
+
   const handleSignIn = async () => {
     if (email && password) {
       try {
@@ -63,7 +69,9 @@ export default function SignUpPage() {
           <Link href="/" passHref>
             <Typography variant="h6">Habit Tracker</Typography>
           </Link>
+          <Link href="/signup" passHref>
           <Button>Sign Up</Button>
+          </Link>
         </Toolbar>
       </AppBar>
 
@@ -103,6 +111,7 @@ export default function SignUpPage() {
             label="Email"
             variant="standard"
             sx={{ width: "355px" }}
+            onKeyDown={handleKeyDown}
           />
           <TextField
             onChange={(e) => setPassword(e.target.value)}
@@ -110,6 +119,7 @@ export default function SignUpPage() {
             variant="standard"
             type="password"
             sx={{ width: "355px" }}
+            onKeyDown={handleKeyDown}
           />
           <Button
             variant="outlined"
