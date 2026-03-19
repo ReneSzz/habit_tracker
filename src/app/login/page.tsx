@@ -11,6 +11,8 @@ import {
   Card,
   CardContent,
   TextField,
+  CssBaseline,
+  
 } from "@mui/material";
 import Link from "next/link";
 import { auth } from "../lib/firebaseConfig";
@@ -20,9 +22,41 @@ import {
 import { useRouter } from "next/navigation";
 
 const darkTheme = createTheme({
+  typography: {
+    fontFamily: '"Inter", sans-serif',},
   palette: {
     mode: "dark",
+    primary: {
+      main: "#FF4151",
+    },
+    background: {
+      default: "#0f0f0f",
+      paper: "#1a1a1a",
+    },
   },
+components: {
+  MuiCard: {
+    styleOverrides: {
+      root: {
+        borderRadius: 12,
+      },
+    },
+  },
+  MuiAppBar: {
+    styleOverrides: {
+      root: {
+        backgroundImage: "none",
+      },
+    },
+  },
+  MuiButton: {
+    styleOverrides: {
+      root: {
+        textTransform: 'none',
+      },
+    },
+  },
+},
 });
 
 export default function SignUpPage() {
@@ -61,16 +95,18 @@ export default function SignUpPage() {
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <AppBar
-        sx={{ backgroundColor: "white", color: "black", boxShadow: 1 }}
-        position="static"
-      >
+      <CssBaseline />
+       <AppBar sx={{ backgroundColor: "background.paper", boxShadow: "0 1px 0 rgba(255,255,255,0.08)" }} position="static">
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Link href="/" passHref>
-            <Typography variant="h6">Habit Tracker</Typography>
+            <Typography variant="h6" sx={{color: '#e1e1e1ff', fontWeight: 'bold'}}>Habit Tracker</Typography>
           </Link>
           <Link href="/signup" passHref>
-          <Button>Sign Up</Button>
+          <Button sx={{color: '#e1e1e1ff',borderRadius: '10px', textTransform: 'none', fontWeight: 'bold',
+      border: '1px solid rgba(255,255,255,0.1)',
+      cursor: 'pointer',
+      transition: 'border-color 0.15s',
+      '&:hover': { borderColor: 'rgba(255,65,81,0.4)' },}}>Sign Up</Button>
           </Link>
         </Toolbar>
       </AppBar>
@@ -99,7 +135,7 @@ export default function SignUpPage() {
           }}
         >
           <Typography
-            sx={{ fontWeight: "bold" }}
+            sx={{fontWeight: 500, fontSize: 22  }}
             variant="h5"
             align="center"
             gutterBottom
@@ -133,8 +169,8 @@ export default function SignUpPage() {
               {error}
             </Typography>
           )}
-          <Typography sx={{ fontWeight: "bold" }} align="center" gutterBottom>
-            Don't have an account? <Link href="/signup">Sign up</Link>
+          <Typography sx={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }} align="center" gutterBottom>
+            Don't have an account? <Link href="/signup" className="accent-link" >Sign up</Link>
           </Typography>
         </Card>
       </Container>

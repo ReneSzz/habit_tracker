@@ -42,3 +42,8 @@ a {
     color-scheme: dark;
   }
 }
+
+.accent-link {
+  color: #f65461 !important;
+  text-decoration: none;
+}

@@ -48,6 +48,8 @@ import Stack from '@mui/material/Stack';
 
 // Theme configuration
 const Theme = createTheme({
+  typography: {
+    fontFamily: '"Inter", sans-serif',},
   palette: {
     mode: "dark",
     primary: {
@@ -58,22 +60,29 @@ const Theme = createTheme({
       paper: "#1a1a1a",
     },
   },
-  components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          backgroundImage: "none",
-        },
+components: {
+  MuiCard: {
+    styleOverrides: {
+      root: {
+        borderRadius: 12,
       },
     },
   },
+  MuiAppBar: {
+    styleOverrides: {
+      root: {
+        backgroundImage: "none",
+      },
+    },
+  },
+  MuiButton: {
+    styleOverrides: {
+      root: {
+        textTransform: 'none',
+      },
+    },
+  },
+},
 });
 
 // Habit interface
@@ -111,6 +120,8 @@ export default function Home() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [totalHabits, setTotalHabits] = useState(0);
+  const [completedToday, setCompletedToday] = useState(0);
 
   // Modal open/close handlers
   const handleOpen = () => setOpen(true);
@@ -154,6 +165,8 @@ export default function Home() {
           const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
           const totalHabits = updatedHabits.length;
           setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
+          setTotalHabits(totalHabits);
+          setCompletedToday(checkedHabits);
         }
       }
     } catch (error) {
@@ -181,6 +194,8 @@ export default function Home() {
         const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
         const totalHabits = updatedHabits.length;
         setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
+        setTotalHabits(totalHabits);
+        setCompletedToday(checkedHabits);
       }
     } catch (error) {
       console.error("Error removing progress:", error);
@@ -239,10 +254,14 @@ export default function Home() {
       const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
       const totalHabits = updatedHabits.length;
       setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
+      setTotalHabits(totalHabits);
+      setCompletedToday(checkedHabits);
+     
     } catch (error) {
       console.error("Error fetching habits:", error);
     } finally {
       setLoading(false);
+      
     }
   };
 
@@ -306,7 +325,7 @@ export default function Home() {
            <AppBar sx={{ backgroundColor: "background.paper", boxShadow: "0 1px 0 rgba(255,255,255,0.08)" }} position="static">
               <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Link href="/">
-                  <Typography variant="h6" sx={{ flexGrow: 1, color: '#e1e1e1ff' }}>
+                  <Typography  sx={{ flexGrow: 1, color: '#e1e1e1ff', fontWeight: 'bold' }}>
                     Habit Tracker
                   </Typography>
                 </Link>
@@ -332,7 +351,7 @@ export default function Home() {
                 </Box>
   
                 {user ? (
-                  <Button onClick={handleSignOut} sx={{color: '#e1e1e1ff',borderRadius: '10px',
+                  <Button onClick={handleSignOut} sx={{color: '#e1e1e1ff',borderRadius: '10px', textTransform: 'none', fontWeight: 'bold',
       border: '1px solid rgba(255,255,255,0.1)',
       cursor: 'pointer',
       transition: 'border-color 0.15s',
@@ -374,7 +393,44 @@ export default function Home() {
                 minHeight: "86vh",
                 paddingTop: '30px',
               }}
-            >
+            > 
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mb: 3 }}>
+  <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
+    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
+      Today
+    </Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>
+      {completedToday}/{totalHabits}
+    </Typography>
+    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
+      habits done
+    </Typography>
+  </Box>
+
+  <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
+    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
+      Best streak
+    </Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>
+      --
+    </Typography>
+    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
+      coming soon
+    </Typography>
+  </Box>
+
+  <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
+    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
+      This week
+    </Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>
+      --
+    </Typography>
+    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
+      coming soon
+    </Typography>
+  </Box>
+</Box>
               <Container maxWidth="sm" disableGutters sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                 {habits.length === 0 ? (
                   <p>No habits found</p>
