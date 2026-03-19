@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 
 const darkTheme = createTheme({
   palette: {
-    mode: "light",
+    mode: "dark",
   },
 });
 

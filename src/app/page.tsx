@@ -18,6 +18,7 @@ import {
   Select,
   Card,
   IconButton,
+  CssBaseline,
 } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
@@ -48,7 +49,30 @@ import Stack from '@mui/material/Stack';
 // Theme configuration
 const Theme = createTheme({
   palette: {
-    mode: "light",
+    mode: "dark",
+    primary: {
+      main: "#FF4151",
+    },
+    background: {
+      default: "#0f0f0f",
+      paper: "#1a1a1a",
+    },
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+        },
+      },
+    },
   },
 });
 
@@ -68,7 +92,7 @@ const style = {
   transform: "translate(-50%, -50%)",
   width: 400,
   bgcolor: "background.paper",
-  border: "2px solid #000",
+  border: "1px solid rgba(255,255,255,0.1)",
   boxShadow: 24,
   p: 4,
   display: "flex",
@@ -278,11 +302,11 @@ export default function Home() {
     <>
       <AuthProvider>
         <PrivateRoute>
-          <ThemeProvider theme={Theme}>
-            <AppBar sx={{ backgroundColor: "white", color: "black", boxShadow: 1 }} position="static">
+          <ThemeProvider theme={Theme}>  <CssBaseline />
+           <AppBar sx={{ backgroundColor: "background.paper", boxShadow: "0 1px 0 rgba(255,255,255,0.08)" }} position="static">
               <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Link href="/">
-                  <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" sx={{ flexGrow: 1, color: '#e1e1e1ff' }}>
                     Habit Tracker
                   </Typography>
                 </Link>
@@ -292,14 +316,27 @@ export default function Home() {
                   <LinearProgress
                     variant="determinate"
                     value={progress}
-                    sx={{ width: '800px', height: 10, borderRadius: 5 }}
+                    sx={{
+  width: '320px',
+  height: 4,
+  borderRadius: 2,
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  '& .MuiLinearProgress-bar': {
+    backgroundColor: '#FF4151',
+    borderRadius: 2,
+  },
+}}
                   />
                    </Stack>
                   <Typography>{progress}%</Typography>
                 </Box>
   
                 {user ? (
-                  <Button onClick={handleSignOut}>Sign Out</Button>
+                  <Button onClick={handleSignOut} sx={{color: '#e1e1e1ff',borderRadius: '10px',
+      border: '1px solid rgba(255,255,255,0.1)',
+      cursor: 'pointer',
+      transition: 'border-color 0.15s',
+      '&:hover': { borderColor: 'rgba(255,65,81,0.4)' },}}>Sign Out</Button>
                 ) : (
                   <Link href="/signup">
                     <Button>Sign Up</Button>
@@ -330,50 +367,67 @@ export default function Home() {
               </Box>
             </Modal>
             <Container>
-         
-            <Container
+                    
+                      <Container
+              maxWidth="sm"
               sx={{
-                height: "86vh",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 2,
+                minHeight: "86vh",
                 paddingTop: '30px',
-                alignItems: 'flex-start'
               }}
             >
-              <Container sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+              <Container maxWidth="sm" disableGutters sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                 {habits.length === 0 ? (
                   <p>No habits found</p>
                 ) : (
                   habits.map((habit) => (
-                    <Card
-                      sx={{
-                        padding: '20px',
-                        width: '260px',
-                        minHeight: '75px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: "space-between",
-                        backgroundColor: habit.checked ? '#a2d5f8 ' : 'lightcoral',
-                      }}
-                      key={habit.id}
-                    >
+                    <Box
+  key={habit.id}
+  sx={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    padding: '14px 16px',
+    borderRadius: '10px',
+    backgroundColor: habit.checked ? 'rgba(255,255,255,0.03)' : 'transparent',
+    transition: 'background 0.15s',
+    '&:hover': { backgroundColor: 'rgba(255,255,255,0.04)' },
+  }}
+>
                       <Typography
-                        gutterBottom
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: 14,
-                          wordBreak: "break-word", 
-                          overflowWrap: "break-word",
-                          flex: 1
-                        }}
-                      >
+  sx={{
+    flex: 1,
+    fontSize: 15,
+    color: habit.checked ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.85)',
+    textDecoration: habit.checked ? 'line-through' : 'none',
+    textDecorationColor: 'rgba(255,255,255,0.15)',
+    wordBreak: 'break-word',
+  }}
+>
                         {habit.title}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: "center" }}>
-                        <Button onClick={() => increaseProgress(habit.id)} sx={{}}>
-                          ✔
-                        </Button>
+                        <Box
+  onClick={() => increaseProgress(habit.id)}
+  sx={{
+    width: 22,
+    height: 22,
+    borderRadius: '6px',
+    border: habit.checked ? 'none' : '1.5px solid rgba(255,255,255,0.15)',
+    backgroundColor: habit.checked ? '#FF4151' : 'transparent',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    flexShrink: 0,
+    transition: 'all 0.15s',
+  }}
+>
+  {habit.checked && (
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+      <path d="M1.5 5.5L4.5 8.5L9.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )}
+</Box>
                         <Tooltip title={`Last completed: ${habit.lastChecked}`}>
                         <IconButton onClick={(event) => handleMenuOpen(event, habit.id)}>
                           <MoreVertIcon />
@@ -401,7 +455,7 @@ export default function Home() {
                        
                       </Box>
                       
-                    </Card>
+                    </Box>
                   ))
                 )}
               </Container>
@@ -410,10 +464,29 @@ export default function Home() {
   
             </Container>
   
-            <Container sx={{ display: 'flex', alignItems: "center", justifyContent: "center", gap: '10px' }}>
-              <Typography variant="h6"> Add habit </Typography>
-              <Button variant="contained" sx={{ backgroundColor: '#FF4151' }} onClick={handleOpen}> + </Button>
-            </Container>
+            <Container maxWidth="md">
+  <Box
+    onClick={handleOpen}
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1.5,
+      padding: '12px 16px',
+      borderRadius: '10px',
+      border: '1px dashed rgba(255,255,255,0.1)',
+      cursor: 'pointer',
+      transition: 'border-color 0.15s',
+      '&:hover': { borderColor: 'rgba(255,65,81,0.4)' },
+    }}
+  >
+    <Box sx={{ width: 22, height: 22, borderRadius: '6px', backgroundColor: 'rgba(255,65,81,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF4151', fontSize: 18 }}>
+      +
+    </Box>
+    <Typography sx={{ fontSize: 14, color: 'rgba(255,255,255,0.25)' }}>
+      Add a new habit
+    </Typography>
+  </Box>
+</Container>
           </ThemeProvider>
         </PrivateRoute>
       </AuthProvider>
