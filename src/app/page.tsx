@@ -57,7 +57,7 @@ const Theme = createTheme({
     },
     background: {
       default: "#0f0f0f",
-      paper: "#1a1a1a",
+      paper: "#141414ff",
     },
   },
 components: {
@@ -91,6 +91,8 @@ interface Habit {
   title: string;
   checked: boolean;
   lastChecked: string;
+  streak: number;
+  weeklyRate: number;
 }
 
 // Modal styling
@@ -108,6 +110,44 @@ const style = {
   flexDirection: "column",
   gap: "10px",
 };
+function calculateStreak(completions: string[]): number {
+  if (completions.length === 0) return 0;
+
+  const sorted = [...new Set(completions)].sort().reverse();
+  const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  // streak is dead if nothing completed today or yesterday
+  if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
+
+  let streak = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1]);
+    const curr = new Date(sorted[i]);
+    const diff = (prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24);
+    if (diff === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function calculateWeeklyRate(completions: string[]): number {
+  const today = new Date();
+  const days: string[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(d.toISOString().split("T")[0]);
+  }
+
+  const completionSet = new Set(completions);
+  const completed = days.filter((d) => completionSet.has(d)).length;
+  return Math.round((completed / 7) * 100);
+}
 
 export default function Home() {
   // State variables
@@ -122,6 +162,8 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [totalHabits, setTotalHabits] = useState(0);
   const [completedToday, setCompletedToday] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [weeklyRate, setWeeklyRate] = useState(0);
 
   // Modal open/close handlers
   const handleOpen = () => setOpen(true);
@@ -167,6 +209,12 @@ export default function Home() {
           setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
           setTotalHabits(totalHabits);
           setCompletedToday(checkedHabits);
+          const completionRef = doc(
+  db, "users", user.uid, "habits", habitId, "completions", currentDate
+);
+await setDoc(completionRef, { completedAt: currentDate });
+
+await fetchHabits();
         }
       }
     } catch (error) {
@@ -184,18 +232,26 @@ export default function Home() {
 
       if (habitSnap.exists()) {
         await updateDoc(habitRef, { checked: false });
+const updatedHabits = habits.map((habit) =>
+  habit.id === selectedHabit ? { ...habit, checked: false } : habit
+);
+setHabits(updatedHabits);
+// Recalculate progress
+const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
+const totalHabits = updatedHabits.length;
+setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
+setTotalHabits(totalHabits);
+setCompletedToday(checkedHabits);
+// Delete today's completion document
+const currentDate = new Date().toISOString().split("T")[0];
+const completionRef = doc(
+  db, "users", user.uid, "habits", selectedHabit, "completions", currentDate
+);
+await deleteDoc(completionRef);
+await fetchHabits();
+        
 
-        const updatedHabits = habits.map((habit) =>
-          habit.id === selectedHabit ? { ...habit, checked: false} : habit
-        );
-        setHabits(updatedHabits);
-
-        // Recalculate progress
-        const checkedHabits = updatedHabits.filter((habit) => habit.checked).length;
-        const totalHabits = updatedHabits.length;
-        setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 0);
-        setTotalHabits(totalHabits);
-        setCompletedToday(checkedHabits);
+        
       }
     } catch (error) {
       console.error("Error removing progress:", error);
@@ -227,10 +283,25 @@ export default function Home() {
       const habitQuery = query(habitsRef, orderBy("createdAt", "desc"));
 
       const habitSnapshot = await getDocs(habitQuery);
-      const habitList = habitSnapshot.docs.map((doc) => ({
-        ...doc.data() as Habit,
-        id: doc.id,
-      }));
+      
+      const habitList = await Promise.all(
+  habitSnapshot.docs.map(async (habitDoc) => {
+    const data = habitDoc.data() as Habit;
+
+    const completionsRef = collection(
+      db, "users", user.uid, "habits", habitDoc.id, "completions"
+    );
+    const completionsSnap = await getDocs(completionsRef);
+    const completions = completionsSnap.docs.map((d) => d.id);
+
+    return {
+      ...data,
+      id: habitDoc.id,
+      streak: calculateStreak(completions),
+      weeklyRate: calculateWeeklyRate(completions),
+    };
+  })
+);
 
       const currentDate = new Date().toISOString().split("T")[0];
 
@@ -241,7 +312,16 @@ export default function Home() {
         return habit;
       });
 
-      setHabits(updatedHabits);
+      const sortedHabits = [...updatedHabits].sort((a, b) => b.streak - a.streak);
+      setHabits(sortedHabits);
+      const best = Math.max(...updatedHabits.map((h) => h.streak), 0);
+      setBestStreak(best);
+      const avgWeekly = updatedHabits.length > 0
+  ? Math.round(
+      updatedHabits.reduce((sum, h) => sum + h.weeklyRate, 0) / updatedHabits.length
+    )
+  : 0;
+setWeeklyRate(avgWeekly);
 
       // Update Firestore
       const batch = writeBatch(db);
@@ -402,33 +482,34 @@ export default function Home() {
     <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>
       {completedToday}/{totalHabits}
     </Typography>
+    
     <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
       habits done
     </Typography>
   </Box>
 
   <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
-    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
-      Best streak
+     <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
+      Best Streak
     </Typography>
     <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>
-      --
-    </Typography>
-    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
-      coming soon
-    </Typography>
+  {bestStreak}
+</Typography>
+<Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
+  days in a row
+</Typography>
   </Box>
 
   <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
-    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
-      This week
+     <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>
+      This Week
     </Typography>
     <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>
-      --
-    </Typography>
-    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
-      coming soon
-    </Typography>
+  {weeklyRate}%
+</Typography>
+<Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>
+  completion rate
+</Typography>
   </Box>
 </Box>
               <Container maxWidth="sm" disableGutters sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -461,6 +542,31 @@ export default function Home() {
 >
                         {habit.title}
                       </Typography>
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                        backgroundColor: habit.streak >= 7
+                          ? 'rgba(255,65,81,0.12)'
+                          : habit.streak > 0
+                          ? 'rgba(255,165,0,0.12)'
+                          : 'rgba(255,255,255,0.06)',
+                        color: habit.streak >= 7
+                          ? '#FF4151'
+                          : habit.streak > 0
+                          ? '#FFA500'
+                          : 'rgba(255,255,255,0.4)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                      }}>
+                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', opacity: 0.7 }}/>
+                        <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'inherit' }}>
+                          {habit.streak ?? 0} day{habit.streak !== 1 ? 's' : ''}
+                        </Typography>
+                      </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: "center" }}>
                         <Box
   onClick={() => increaseProgress(habit.id)}
