@@ -114,34 +114,35 @@ function calculateStreak(completions: string[]): number {
   if (completions.length === 0) return 0;
 
   const sorted = [...new Set(completions)].sort().reverse();
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+ const today = new Date().toLocaleDateString('en-CA');
+const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
 
   // streak is dead if nothing completed today or yesterday
   if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
 
   let streak = 1;
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1]);
-    const curr = new Date(sorted[i]);
-    const diff = (prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24);
-    if (diff === 1) {
-      streak++;
-    } else {
-      break;
-    }
+  const prev = sorted[i - 1].split('-').map(Number);
+  const curr = sorted[i].split('-').map(Number);
+  const prevDate = new Date(prev[0], prev[1] - 1, prev[2]);
+  const currDate = new Date(curr[0], curr[1] - 1, curr[2]);
+  const diff = Math.round((prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff === 1) {
+    streak++;
+  } else {
+    break;
   }
+}
   return streak;
 }
 
 function calculateWeeklyRate(completions: string[]): number {
-  const today = new Date();
   const days: string[] = [];
 
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    days.push(d.toISOString().split("T")[0]);
+   const d = new Date();
+d.setDate(d.getDate() - i);
+days.push(d.toLocaleDateString('en-CA'));
   }
 
   const completionSet = new Set(completions);
@@ -193,7 +194,7 @@ export default function Home() {
       if (habitSnap.exists()) {
         const habitData = habitSnap.data();
         const checked = habitData?.checked;
-        const currentDate = new Date().toISOString().split("T")[0];
+        const currentDate = new Date().toLocaleDateString('en-CA');
 
         if (!checked) {
           await updateDoc(habitRef, { checked: true, lastChecked: currentDate });
@@ -243,7 +244,7 @@ setProgress(totalHabits > 0 ? Math.round((checkedHabits / totalHabits) * 100) : 
 setTotalHabits(totalHabits);
 setCompletedToday(checkedHabits);
 // Delete today's completion document
-const currentDate = new Date().toISOString().split("T")[0];
+const currentDate = new Date().toLocaleDateString('en-CA');
 const completionRef = doc(
   db, "users", user.uid, "habits", selectedHabit, "completions", currentDate
 );
@@ -303,7 +304,7 @@ await fetchHabits();
   })
 );
 
-      const currentDate = new Date().toISOString().split("T")[0];
+      const currentDate = new Date().toLocaleDateString('en-CA');
 
       const updatedHabits = habitList.map((habit) => {
         if (habit.lastChecked !== currentDate) {
