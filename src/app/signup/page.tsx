@@ -174,7 +174,10 @@ export default function SignUpPage() {
             </Typography>
           )}
 
-          <Typography sx={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }} align="center">
+          <Typography
+            sx={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}
+            align="center"
+          >
             Already have an account?{" "}
             <Link href="/login" className="accent-link">
               Log in
