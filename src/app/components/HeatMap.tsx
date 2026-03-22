@@ -49,7 +49,7 @@ export default function HeatMap({ completionMap, totalHabits }: HeatMapProps) {
   return (
     <Box sx={{ backgroundColor: '#141414', borderRadius: '12px', padding: '20px', overflowX: 'auto', mt: 3 }}>
       <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 2 }}>
-        Completion history — last 12 months
+       
       </Typography>
 
       <Box sx={{ display: 'flex', marginLeft: '28px', marginBottom: '6px', position: 'relative', height: '16px' }}>
