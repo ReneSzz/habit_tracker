@@ -3,6 +3,7 @@
 A full-stack habit tracking app built with Next.js and Firebase. Track your daily habits, monitor streaks, visualize your completion history, and stay consistent.
 
 **[Live Demo](https://habittracker-theta.vercel.app/)**
+![ezgif-2e798b6ff8ba61f5](https://github.com/user-attachments/assets/c596dad8-f9ba-4963-971d-c4c0ac552d6e)
 
 ---
 
