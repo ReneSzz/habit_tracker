@@ -4,10 +4,6 @@ A full-stack habit tracking app built with Next.js and Firebase. Track your dail
 
 **[Live Demo](https://habittracker-theta.vercel.app/)**
 
----
-
-
----
 
 ## Features
 
@@ -18,6 +14,21 @@ A full-stack habit tracking app built with Next.js and Firebase. Track your dail
 - **Weekly completion rate** — Tracks what percentage of habits you completed over the last 7 days
 - **12-month heatmap** — GitHub-style contribution graph showing daily completion intensity across all habits
 - **Dark theme** — Clean, minimal dark UI built with Material UI
+---
+## User Login Authentication
+![ezgif-22edadd722816be7](https://github.com/user-attachments/assets/5cc408b8-b43e-47f4-9f91-5e303d5c653d)
+
+
+## Habit Completion and Undo 
+![ezgif-2e798b6ff8ba61f5](https://github.com/user-attachments/assets/c596dad8-f9ba-4963-971d-c4c0ac552d6e)
+
+
+
+## Habit Deletion and Creation
+![ezgif-2adf1e394a6af8eb](https://github.com/user-attachments/assets/fadd71ad-8224-4456-89de-84116431e342)
+
+
+---
 
 ## Tech Stack
 
@@ -34,7 +45,7 @@ Each habit stores its completion history as a subcollection. This allows the str
 
 ## How Streak Tracking Works
 
-When a habit is marked complete, a document is written to the `completions` subcollection using today's date as the document ID. This naturally prevents duplicate entries for the same day.
+When a habit is marked complete, a document is written to the `completions` subcollection using today's date as the document ID. Preventing duplicate entries for the same day.
 
 On load, the streak algorithm:
 
