@@ -56,6 +56,7 @@ export function useHabits(user: User | null) {
           );
           const completionsSnap = await getDocs(completionsRef);
           const completions = completionsSnap.docs.map((d) => d.id);
+          
           return {
             ...data,
             id: habitDoc.id,

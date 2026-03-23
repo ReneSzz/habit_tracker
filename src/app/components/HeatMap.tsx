@@ -8,7 +8,8 @@ interface HeatMapProps {
 export default function HeatMap({ completionMap, totalHabits }: HeatMapProps) {
   const today = new Date();
   const startDate = new Date(today.getFullYear(), 0, 1);
-  startDate.setDate(startDate.getDate() - startDate.getDay());
+  const dayOfWeek = startDate.getDay();
+  startDate.setDate(startDate.getDate() - dayOfWeek);
 
   const weeks: { date: Date; count: number }[][] = [];
   const monthLabels: { month: number; weekIndex: number }[] = [];
