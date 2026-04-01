@@ -22,7 +22,8 @@ A full-stack habit tracking app built with Next.js and Firebase. Track your dail
 
 
 ## Habit Completion and Undo 
-![complete undo](https://github.com/user-attachments/assets/07cd3e2c-2dd0-4b05-bfa3-eaa35a6f26be)
+![ezgif-301c83c4833f3615](https://github.com/user-attachments/assets/7c54ec12-ea1e-4048-ac7f-2a751618c0d8)
+
 
 
 
