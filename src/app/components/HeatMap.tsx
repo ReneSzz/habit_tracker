@@ -48,7 +48,7 @@ export default function HeatMap({ completionMap, totalHabits }: HeatMapProps) {
   }
 
   return (
-    <Box sx={{ backgroundColor: '#141414', borderRadius: '12px', padding: '20px', overflowX: 'auto', mt: 3 }}>
+    <Box sx={{ backgroundColor: '#141414', borderRadius: '12px', padding: '20px', mt: 3 }}>
       <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 2 }}>
        
       </Typography>
@@ -86,15 +86,19 @@ export default function HeatMap({ completionMap, totalHabits }: HeatMapProps) {
                   placement="top"
                   arrow
                 >
-                  <Box sx={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '2px',
-                    backgroundColor: cell.count < 0 ? 'rgba(255,255,255,0.03)' : getColor(cell.count),
-                    cursor: 'default',
-                    '&:hover': { opacity: 0.8 },
-                    transition: 'opacity 0.1s',
-                  }} />
+                 <Box sx={{
+  width: '12px',
+  height: '12px',
+  borderRadius: '2px',
+  backgroundColor: cell.count < 0 ? 'rgba(255,255,255,0.03)' : getColor(cell.count),
+  cursor: 'default',
+  '&:hover': { opacity: 0.8 },
+  transition: 'opacity 0.1s',
+  outline: cell.date.toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA')
+    ? '0.2px solid rgba(233, 230, 230, 0.19)'
+    : 'none',
+  outlineOffset: '1px',
+}} />
                 </Tooltip>
               ))}
             </Box>

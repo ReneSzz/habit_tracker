@@ -56,6 +56,7 @@ export default function Home() {
     totalHabits,
     completedToday,
     bestStreak,
+    overallBestStreak,
     weeklyRate,
     completionMap,
     increaseProgress,
@@ -155,12 +156,12 @@ export default function Home() {
          <Box sx={{ display: 'flex', height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
  {/* sidebar */}
   <Box sx={{
-    width: '300px',
-    flexShrink: 0,
-
-    padding: '24px',
-    overflowY: 'auto',
-  }}>
+  width: '420px',
+  flexShrink: 0,
+  borderLeft: '0.5px solid rgba(255,255,255,0.06)',
+  padding: '24px',
+  overflowY: 'auto',
+}}>
     <Typography sx={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.5 }}>
       Completion history
     </Typography>
@@ -174,7 +175,7 @@ export default function Home() {
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mb: 3 }}>
         {[
           { label: 'Today', value: `${completedToday}/${totalHabits}`, sub: 'habits done' },
-          { label: 'Best streak', value: bestStreak, sub: 'days in a row' },
+          { label: 'Best streak', value: Math.max(bestStreak, overallBestStreak), sub: 'days in a row' },
           { label: 'This week', value: `${weeklyRate}%`, sub: 'completion rate' },
         ].map(({ label, value, sub }) => (
           <Box key={label} sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
@@ -234,8 +235,13 @@ export default function Home() {
               }}>
                 <Box sx={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', opacity: 0.7 }} />
                 <Typography sx={{ fontSize: 12, fontWeight: 500, color: 'inherit' }}>
-                  {habit.streak ?? 0} day{habit.streak !== 1 ? 's' : ''}
-                </Typography>
+  {habit.streak ?? 0} day{habit.streak !== 1 ? 's' : ''}
+</Typography>
+{habit.bestStreak > 0 && habit.streak < habit.bestStreak && (
+  <Typography sx={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', ml: 0.5 }}>
+    best: {habit.bestStreak}
+  </Typography>
+)}
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

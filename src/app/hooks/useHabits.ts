@@ -14,7 +14,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
-import { calculateStreak, calculateWeeklyRate } from '../utils/streaks';
+import { calculateStreak, calculateWeeklyRate, calculateAllTimeBest } from '../utils/streaks';
 
 interface Habit {
   id: string;
@@ -23,6 +23,7 @@ interface Habit {
   lastChecked: string;
   streak: number;
   weeklyRate: number;
+  bestStreak: number;
 }
 
 export function useHabits(user: User | null) {
@@ -34,7 +35,20 @@ export function useHabits(user: User | null) {
   const [bestStreak, setBestStreak] = useState(0);
   const [weeklyRate, setWeeklyRate] = useState(0);
   const [completionMap, setCompletionMap] = useState<Record<string, number>>({});
-
+  const [overallBestStreak, setOverallBestStreak] = useState(0);
+const fetchOverallBest = async () => {
+  if (!user || !user.uid) return;
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      setOverallBestStreak(data.overallBestStreak || 0);
+    }
+  } catch (error) {
+    console.error('Error fetching overall best:', error);
+  }
+};
   const fetchHabits = async () => {
     if (!user || !user.uid) return;
 
@@ -58,11 +72,12 @@ export function useHabits(user: User | null) {
           const completions = completionsSnap.docs.map((d) => d.id);
           
           return {
-            ...data,
-            id: habitDoc.id,
-            streak: calculateStreak(completions),
-            weeklyRate: calculateWeeklyRate(completions),
-          };
+  ...data,
+  id: habitDoc.id,
+  streak: calculateStreak(completions),
+  weeklyRate: calculateWeeklyRate(completions),
+  bestStreak: data.bestStreak || 0,
+};
         }),
       );
 
@@ -75,7 +90,41 @@ export function useHabits(user: User | null) {
       setHabits(sortedHabits);
 
       const best = Math.max(...updatedHabits.map((h) => h.streak), 0);
-      setBestStreak(best);
+setBestStreak(best);
+
+// Update per-habit best streak in Firestore if current streak beats it
+const userRef = doc(db, 'users', user.uid);
+const userSnap = await getDoc(userRef);
+const storedOverallBest = userSnap.exists() ? (userSnap.data().overallBestStreak || 0) : 0;
+
+await Promise.all(
+  updatedHabits.map(async (habit) => {
+    const habitRef = doc(db, 'users', user.uid, 'habits', habit.id);
+    const habitSnap = await getDoc(habitRef);
+    const storedBest = habitSnap.exists() ? (habitSnap.data().bestStreak || 0) : 0;
+
+    const completionsRef = collection(
+      db, 'users', user.uid, 'habits', habit.id, 'completions'
+    );
+    const completionsSnap = await getDocs(completionsRef);
+    const completions = completionsSnap.docs.map((d) => d.id);
+
+    // Calculate the true best streak from full history
+    const trueBest = calculateAllTimeBest(completions);
+
+    if (trueBest !== storedBest) {
+      await updateDoc(habitRef, { bestStreak: trueBest });
+    }
+  })
+);
+
+// Update overall best on user document if beaten
+const trueOverallBest = Math.max(...updatedHabits.map((h) => {
+  return h.bestStreak || 0;
+}), 0);
+
+await setDoc(userRef, { overallBestStreak: trueOverallBest }, { merge: true });
+setOverallBestStreak(trueOverallBest);
 
       const avgWeekly =
         updatedHabits.length > 0
@@ -238,6 +287,7 @@ export function useHabits(user: User | null) {
   useEffect(() => {
     fetchHabits();
     fetchAllCompletions();
+    fetchOverallBest();
   }, [user?.uid]);
 
   return {
@@ -247,6 +297,7 @@ export function useHabits(user: User | null) {
     totalHabits,
     completedToday,
     bestStreak,
+    overallBestStreak,
     weeklyRate,
     completionMap,
     increaseProgress,
