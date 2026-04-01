@@ -15,17 +15,21 @@ A full-stack habit tracking app built with Next.js and Firebase. Track your dail
 - **12-month heatmap** — GitHub-style contribution graph showing daily completion intensity across all habits
 - **Dark theme** — Clean, minimal dark UI built with Material UI
 ---
+
 ## User Login Authentication
-![ezgif-22edadd722816be7](https://github.com/user-attachments/assets/5cc408b8-b43e-47f4-9f91-5e303d5c653d)
+![login](https://github.com/user-attachments/assets/996f8dee-bd66-4369-aa54-982de5b97258)
+
 
 
 ## Habit Completion and Undo 
-![ezgif-2e798b6ff8ba61f5](https://github.com/user-attachments/assets/c596dad8-f9ba-4963-971d-c4c0ac552d6e)
+![complete undo](https://github.com/user-attachments/assets/07cd3e2c-2dd0-4b05-bfa3-eaa35a6f26be)
+
 
 
 
 ## Habit Deletion and Creation
-![ezgif-2adf1e394a6af8eb](https://github.com/user-attachments/assets/fadd71ad-8224-4456-89de-84116431e342)
+![add delete](https://github.com/user-attachments/assets/a0759a97-1448-4eff-a25c-2ac69dff3410)
+
 
 
 ---
