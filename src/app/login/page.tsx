@@ -1,16 +1,11 @@
 "use client";
 import { useState } from "react";
 import {
-  AppBar,
-  Toolbar,
   Typography,
   Button,
-  Container,
   createTheme,
   ThemeProvider,
-  Card,
-  CardContent,
-  TextField,
+  Box,
   CssBaseline,
 } from "@mui/material";
 import Link from "next/link";
@@ -19,186 +14,204 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 const darkTheme = createTheme({
-  typography: {
-    fontFamily: '"Inter", sans-serif',
-  },
+  typography: { fontFamily: '"Inter", sans-serif' },
   palette: {
     mode: "dark",
-    primary: {
-      main: "#FF4151",
-    },
-    background: {
-      default: "#0f0f0f",
-      paper: "#141414ff",
-    },
+    primary: { main: "#FF4151" },
+    background: { default: "#0f0f0f", paper: "#141414" },
   },
   components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          backgroundImage: "none",
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-        },
-      },
-    },
+    MuiButton: { styleOverrides: { root: { textTransform: "none" } } },
   },
 });
 
-export default function SignUpPage() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter") {
-      handleSignIn();
-    }
+    if (event.key === "Enter") handleSignIn();
   };
 
   const handleSignIn = async () => {
-    if (email && password) {
-      try {
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          email,
-          password,
-        );
-        console.log("User logged in", userCredential.user);
-
-        // ✅ Redirect to home page after successful login
-        router.push("/");
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error has occurred");
-        }
-      }
+    if (!email || !password) return;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/");
+    } catch (err) {
+      if (err instanceof Error) setError(err.message);
+      else setError("An unknown error has occurred");
     }
   };
 
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <AppBar
-        sx={{
-          backgroundColor: "background.paper",
-          boxShadow: "0 1px 0 rgba(255,255,255,0.08)",
-        }}
-        position="static"
-      >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Link href="/" passHref>
-            <Typography
-              variant="h6"
-              sx={{ color: "#e1e1e1ff", fontWeight: "bold" }}
-            >
-              Habit Tracker
-            </Typography>
-          </Link>
-          <Link href="/signup" passHref>
-            <Button
-              sx={{
-                color: "#e1e1e1ff",
-                borderRadius: "10px",
-                textTransform: "none",
-                fontWeight: "bold",
-                border: "1px solid rgba(255,255,255,0.1)",
-                cursor: "pointer",
-                transition: "border-color 0.15s",
-                "&:hover": { borderColor: "rgba(255,65,81,0.4)" },
-              }}
-            >
-              Sign Up
-            </Button>
-          </Link>
-        </Toolbar>
-      </AppBar>
 
-      <Container
-        sx={{
-          height: "93vh",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
-          justifyContent: "center",
-        }}
-      >
-        <Card
-          variant="outlined"
-          sx={{
-            marginTop: "50px",
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: 1,
-            padding: "20px",
-            width: "400px",
-            height: "500px",
-            justifyContent: "space-around",
-            alignItems: "center",
-          }}
-        >
-          <Typography
-            sx={{ fontWeight: 500, fontSize: 22 }}
-            variant="h5"
-            align="center"
-            gutterBottom
-          >
-            Log in
+      <Box sx={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '20px 40px', zIndex: 10,
+      }}>
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>
+            Habit Tracker
           </Typography>
-          <TextField
-            onChange={(e) => setEmail(e.target.value)}
-            label="Email"
-            variant="standard"
-            sx={{ width: "355px" }}
+        </Link>
+        <Link href="/signup" style={{ textDecoration: 'none' }}>
+          <Box sx={{
+            fontSize: 13, color: 'rgba(255,255,255,0.5)',
+            border: '0.5px solid rgba(255,255,255,0.15)',
+            borderRadius: '8px', padding: '7px 16px', cursor: 'pointer',
+            transition: 'all 0.15s',
+            '&:hover': { color: '#fff', borderColor: 'rgba(255,255,255,0.3)' },
+          }}>
+            Sign up
+          </Box>
+        </Link>
+      </Box>
+
+      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+
+        <Box sx={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          justifyContent: 'center', padding: '80px 64px',
+          borderRight: '0.5px solid rgba(255,255,255,0.06)',
+        }}>
+          <Box sx={{ mb: 6 }}>
+            <Box sx={{
+              display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: '6px', width: 'fit-content', mb: 4,
+            }}>
+              {[
+                '#FF4151','rgba(255,65,81,0.5)','rgba(255,65,81,0.2)','rgba(255,255,255,0.04)','rgba(255,65,81,0.2)','rgba(255,65,81,0.5)','#FF4151',
+                'rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)','rgba(255,65,81,0.2)','rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)',
+                'rgba(255,65,81,0.2)','rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)','rgba(255,65,81,0.2)',
+                'rgba(255,255,255,0.04)','rgba(255,65,81,0.2)','rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)','rgba(255,65,81,0.2)','rgba(255,255,255,0.04)',
+                'rgba(255,65,81,0.2)','rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)','rgba(255,65,81,0.2)',
+                'rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)','rgba(255,65,81,0.2)','rgba(255,65,81,0.5)','#FF4151','rgba(255,65,81,0.5)',
+                '#FF4151','rgba(255,65,81,0.5)','rgba(255,65,81,0.2)','rgba(255,255,255,0.04)','rgba(255,65,81,0.2)','rgba(255,65,81,0.5)','#FF4151',
+              ].map((bg, i) => (
+                <Box key={i} sx={{ width: 10, height: 10, borderRadius: '2px', backgroundColor: bg }} />
+              ))}
+            </Box>
+          </Box>
+
+          <Typography sx={{
+            fontSize: 44, fontWeight: 600, color: '#fff',
+            lineHeight: 1.15, letterSpacing: '-0.5px', mb: 2,
+          }}>
+            Build habits.<br />
+            Keep streaks.<br />
+            <Box component="span" sx={{ color: '#FF4151' }}>Stay consistent.</Box>
+          </Typography>
+
+          <Typography sx={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380 }}>
+            Track your daily habits, visualize your progress over time, and build the consistency that compounds into real change.
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 4, mt: 5 }}>
+            {[
+              { value: '21', label: 'days to build a habit' },
+              { value: '66', label: 'days to make it automatic' },
+              { value: '1%', label: 'better every day' },
+            ].map(({ value, label }) => (
+              <Box key={label}>
+                <Typography sx={{ fontSize: 26, fontWeight: 600, color: '#fff', letterSpacing: '-0.5px' }}>
+                  {value}
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', mt: 0.25 }}>
+                  {label}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        <Box sx={{
+          width: '440px', flexShrink: 0,
+          display: 'flex', flexDirection: 'column',
+          justifyContent: 'center', padding: '80px 48px',
+        }}>
+          <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff', mb: 1 }}>
+            Welcome back
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', mb: 4 }}>
+            Log in to your account to continue
+          </Typography>
+
+          <Typography sx={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.07em', textTransform: 'uppercase', mb: 1 }}>
+            Email
+          </Typography>
+          <Box
+            component="input"
+            type="email"
+            value={email}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             onKeyDown={handleKeyDown}
+            placeholder="you@email.com"
+            sx={{
+              width: '100%', background: 'rgba(255,255,255,0.05)',
+              border: '0.5px solid rgba(255,255,255,0.1)',
+              borderRadius: '10px', padding: '12px 14px',
+              color: '#fff', fontSize: 14, outline: 'none',
+              fontFamily: 'Inter, sans-serif', mb: 2.5,
+              '&::placeholder': { color: 'rgba(255,255,255,0.2)' },
+              '&:focus': { borderColor: 'rgba(255,65,81,0.5)', background: 'rgba(255,65,81,0.04)' },
+            }}
           />
-          <TextField
-            onChange={(e) => setPassword(e.target.value)}
-            label="Password"
-            variant="standard"
+
+          <Typography sx={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.07em', textTransform: 'uppercase', mb: 1 }}>
+            Password
+          </Typography>
+          <Box
+            component="input"
             type="password"
-            sx={{ width: "355px" }}
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             onKeyDown={handleKeyDown}
+            placeholder="••••••••"
+            sx={{
+              width: '100%', background: 'rgba(255,255,255,0.05)',
+              border: '0.5px solid rgba(255,255,255,0.1)',
+              borderRadius: '10px', padding: '12px 14px',
+              color: '#fff', fontSize: 14, outline: 'none',
+              fontFamily: 'Inter, sans-serif', mb: 3,
+              '&::placeholder': { color: 'rgba(255,255,255,0.2)' },
+              '&:focus': { borderColor: 'rgba(255,65,81,0.5)', background: 'rgba(255,65,81,0.04)' },
+            }}
           />
-          <Button
-            variant="outlined"
-            sx={{ fontWeight: "bold", width: "200px" }}
-            onClick={handleSignIn}
-          >
-            Log in
-          </Button>
+
           {error && (
-            <Typography color="error" align="center">
+            <Typography sx={{ fontSize: 13, color: '#FF4151', mb: 2, mt: -1 }}>
               {error}
             </Typography>
           )}
-          <Typography
-            sx={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}
-            align="center"
-            gutterBottom
+
+          <Button
+            onClick={handleSignIn}
+            fullWidth
+            sx={{
+              backgroundColor: '#FF4151', color: '#fff',
+              borderRadius: '10px', padding: '12px',
+              fontSize: 14, fontWeight: 500, mb: 3,
+              '&:hover': { backgroundColor: '#e0303f' },
+            }}
           >
-            Don't have an account?{" "}
-            <Link href="/signup" className="accent-link">
+            Log in
+          </Button>
+
+          <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
+            Don't have an account?{' '}
+            <Link href="/signup" style={{ color: '#FF4151', textDecoration: 'none' }}>
               Sign up
             </Link>
           </Typography>
-        </Card>
-      </Container>
+        </Box>
+
+      </Box>
     </ThemeProvider>
   );
 }

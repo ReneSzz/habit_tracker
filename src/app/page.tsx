@@ -112,6 +112,7 @@ export default function Home() {
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <Stack sx={{ width: '100%' }} spacing={2}>
+                  
                   <LinearProgress
                     variant="determinate"
                     value={progress}
@@ -122,7 +123,7 @@ export default function Home() {
                     }}
                   />
                 </Stack>
-                <Typography>{progress}%</Typography>
+                <Typography sx={{ color: '#e1e1e1', fontWeight: 'bold', textWrap: 'nowrap'}}>{progress}% Completed</Typography>
               </Box>
 
               {user ? (
@@ -168,7 +169,7 @@ export default function Home() {
     <HeatMap completionMap={completionMap} totalHabits={totalHabits} />
   </Box>
   {/* main scrollable column */}
- <Box sx={{ flex: 1, overflowY: 'auto', marginRight: '300px', padding: '24px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+ <Box sx={{ flex: 1, overflowY: 'auto',marginRight: '400px', padding: '24px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
   <Box sx={{ width: '100%', maxWidth: '520px' }}>
 
       {/* stat cards */}
