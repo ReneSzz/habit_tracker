@@ -60,12 +60,6 @@ On load, the streak algorithm:
 
 
 
-- [ ] Per-habit heatmap view
-- [ ] Push notifications / reminders
-- [ ] Habit categories and filtering
-- [ ] Export completion history as CSV
-- [ ] Mobile app (React Native)
-
 ## License
 
 MIT
