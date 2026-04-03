@@ -28,6 +28,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useHabits } from './hooks/useHabits';
 import HeatMap from './components/HeatMap';
 import AddHabitModal from './components/AddHabitModal';
+import { useJournal } from './hooks/useJournal';
+import JournalPanel from './components/JournalPanel';
 
 const Theme = createTheme({
   typography: { fontFamily: '"Inter", sans-serif' },
@@ -64,6 +66,16 @@ export default function Home() {
     deleteHabit,
     addHabit,
   } = useHabits(user);
+
+
+  const {
+  journalEntries,
+  journalText,
+  setJournalText,
+  selectedMood,
+  setSelectedMood,
+  saveJournalEntry,
+} = useJournal(user);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -169,7 +181,7 @@ export default function Home() {
     <HeatMap completionMap={completionMap} totalHabits={totalHabits} />
   </Box>
   {/* main scrollable column */}
- <Box sx={{ flex: 1, overflowY: 'auto',marginRight: '400px', padding: '24px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+ <Box sx={{ flex: 1, overflowY: 'auto', padding: '24px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
   <Box sx={{ width: '100%', maxWidth: '520px' }}>
 
       {/* stat cards */}
@@ -281,6 +293,7 @@ export default function Home() {
             </Box>
           ))
         )}
+        
       </Box>
 
       {/* add habit trigger */}
@@ -304,8 +317,16 @@ export default function Home() {
 
     </Box>
   </Box>
+{/* Journal side bar */}
+<JournalPanel
+    journalEntries={journalEntries}
+    journalText={journalText}
+    setJournalText={setJournalText}
+    selectedMood={selectedMood}
+    setSelectedMood={setSelectedMood}
+    onSave={saveJournalEntry}
+  />
 
- 
 
 </Box>
 

@@ -58,28 +58,25 @@ const fetchOverallBest = async () => {
       const habitSnapshot = await getDocs(habitQuery);
 
       const habitList = await Promise.all(
-        habitSnapshot.docs.map(async (habitDoc) => {
-          const data = habitDoc.data() as Habit;
-          const completionsRef = collection(
-            db,
-            'users',
-            user.uid,
-            'habits',
-            habitDoc.id,
-            'completions',
-          );
-          const completionsSnap = await getDocs(completionsRef);
-          const completions = completionsSnap.docs.map((d) => d.id);
-          
-          return {
-  ...data,
-  id: habitDoc.id,
-  streak: calculateStreak(completions),
-  weeklyRate: calculateWeeklyRate(completions),
-  bestStreak: data.bestStreak || 0,
-};
-        }),
-      );
+  habitSnapshot.docs.map(async (habitDoc) => {
+    const data = habitDoc.data() as Habit;
+    const completionsRef = collection(
+      db, 'users', user.uid, 'habits', habitDoc.id, 'completions',
+    );
+    const completionsSnap = await getDocs(completionsRef);
+    const completions = completionsSnap.docs.map((d) => d.id);
+    const currentStreak = calculateStreak(completions);
+    const trueBest = calculateAllTimeBest(completions);
+    return {
+      ...data,
+      id: habitDoc.id,
+      streak: currentStreak,
+      weeklyRate: calculateWeeklyRate(completions),
+      bestStreak: trueBest,
+      _completions: completions,
+    };
+  }),
+);
 
       const currentDate = new Date().toLocaleDateString('en-CA');
       const updatedHabits = habitList.map((habit) =>
@@ -98,22 +95,12 @@ const userSnap = await getDoc(userRef);
 const storedOverallBest = userSnap.exists() ? (userSnap.data().overallBestStreak || 0) : 0;
 
 await Promise.all(
-  updatedHabits.map(async (habit) => {
+  habitList.map(async (habit) => {
     const habitRef = doc(db, 'users', user.uid, 'habits', habit.id);
     const habitSnap = await getDoc(habitRef);
     const storedBest = habitSnap.exists() ? (habitSnap.data().bestStreak || 0) : 0;
-
-    const completionsRef = collection(
-      db, 'users', user.uid, 'habits', habit.id, 'completions'
-    );
-    const completionsSnap = await getDocs(completionsRef);
-    const completions = completionsSnap.docs.map((d) => d.id);
-
-    // Calculate the true best streak from full history
-    const trueBest = calculateAllTimeBest(completions);
-
-    if (trueBest !== storedBest) {
-      await updateDoc(habitRef, { bestStreak: trueBest });
+    if (habit.bestStreak !== storedBest) {
+      await updateDoc(habitRef, { bestStreak: habit.bestStreak });
     }
   })
 );
