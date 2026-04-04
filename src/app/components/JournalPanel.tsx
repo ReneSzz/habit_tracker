@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { JournalEntry } from '../hooks/useJournal';
 
 interface JournalPanelProps {
+  mobile ?: boolean;
   journalEntries: JournalEntry[];
   journalText: string;
   setJournalText: (text: string) => void;
@@ -32,6 +33,7 @@ function formatTodayFull(): string {
 }
 
 export default function JournalPanel({
+  mobile,
   journalEntries,
   journalText,
   setJournalText,
@@ -41,15 +43,14 @@ export default function JournalPanel({
   onDelete,
 }: JournalPanelProps) {
   return (
-    <Box sx={{
-      width: '400px',
-      flexShrink: 0,
-      borderLeft: '0.5px solid rgba(255,255,255,0.06)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      padding: '20px',
-    }}>
+   <Box sx={{
+  width: mobile ? '100%' : '400px',
+  paddingRight: '25px',
+  flexShrink: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: mobile ? 'visible' : 'hidden',
+}}>
 
       <Typography sx={{
         fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.3)',
