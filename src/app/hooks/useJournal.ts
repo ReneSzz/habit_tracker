@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  setDoc,
-  query,
-  orderBy,
+  collection, doc, getDocs, getDoc,
+  setDoc, query, orderBy, deleteDoc,
 } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 
@@ -64,6 +59,17 @@ export function useJournal(user: User | null) {
     }
   };
 
+const deleteJournalEntry = async (entryId: string) => {
+  if (!user || !user.uid) return;
+  try {
+    const entryRef = doc(db, 'users', user.uid, 'journal', entryId);
+    await deleteDoc(entryRef);
+    await fetchJournalEntries();
+  } catch (error) {
+    console.error('Error deleting journal entry:', error);
+  }
+};
+
   const saveJournalEntry = async () => {
     if (!user || !user.uid || !journalText.trim()) return;
     try {
@@ -84,13 +90,14 @@ export function useJournal(user: User | null) {
     fetchTodayEntry();
   }, [user?.uid]);
 
-  return {
-    journalEntries,
-    journalText,
-    setJournalText,
-    selectedMood,
-    setSelectedMood,
-    journalMap,
-    saveJournalEntry,
-  };
+ return {
+  journalEntries,
+  journalText,
+  setJournalText,
+  selectedMood,
+  setSelectedMood,
+  journalMap,
+  saveJournalEntry,
+  deleteJournalEntry,
+};
 }

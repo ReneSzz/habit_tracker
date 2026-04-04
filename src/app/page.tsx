@@ -68,13 +68,14 @@ export default function Home() {
   } = useHabits(user);
 
 
-  const {
+const {
   journalEntries,
   journalText,
   setJournalText,
   selectedMood,
   setSelectedMood,
   saveJournalEntry,
+  deleteJournalEntry,
 } = useJournal(user);
 
   useEffect(() => {
@@ -319,13 +320,14 @@ export default function Home() {
   </Box>
 {/* Journal side bar */}
 <JournalPanel
-    journalEntries={journalEntries}
-    journalText={journalText}
-    setJournalText={setJournalText}
-    selectedMood={selectedMood}
-    setSelectedMood={setSelectedMood}
-    onSave={saveJournalEntry}
-  />
+  journalEntries={journalEntries}
+  journalText={journalText}
+  setJournalText={setJournalText}
+  selectedMood={selectedMood}
+  setSelectedMood={setSelectedMood}
+  onSave={saveJournalEntry}
+  onDelete={deleteJournalEntry}
+/>
 
 
 </Box>
