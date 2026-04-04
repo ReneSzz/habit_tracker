@@ -133,7 +133,7 @@ const {
               </Link>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <Stack sx={{ width: '100%' }} spacing={2}>
+                <Stack sx={{ }} spacing={2}>
                   
                   <LinearProgress
                     variant="determinate"
@@ -145,13 +145,14 @@ const {
                     }}
                   />
                 </Stack>
-                <Typography sx={{ color: '#e1e1e1', fontWeight: 'bold', textWrap: 'nowrap'}}>{progress}% Completed</Typography>
+                <Typography sx={{ color: '#e1e1e157', fontSize: '12px',  textWrap: 'nowrap'}}>{progress}% Completed</Typography>
               </Box>
 
            {user && !isMobile && (
   <Button
     onClick={handleSignOut}
     sx={{
+      alignSelf: 'center', 
       color: '#e1e1e1',
       borderRadius: '10px',
       border: '1px solid rgba(255,255,255,0.1)',
@@ -323,6 +324,7 @@ const {
         <Button
                   onClick={handleSignOut}
                   sx={{
+                    maxWidth: '100px',
                     marginTop:'20px',
                     color: '#e1e1e1',
                     borderRadius: '10px',
