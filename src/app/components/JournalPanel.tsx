@@ -56,7 +56,13 @@ export default function JournalPanel({
         fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.3)',
         letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.5,
       }}>
-        Today's journal
+        Notepad
+      </Typography>
+      <Typography sx={{
+        fontSize: 9, fontWeight: 500, color: 'rgba(255, 255, 255, 0.24)',
+        letterSpacing: '0.08em',  mb: 1.5,
+      }}>
+        How are you feeling?
       </Typography>
 
       {/* Mood selector */}
@@ -119,7 +125,7 @@ export default function JournalPanel({
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
               if (e.target.value.length <= MAX_CHARS) setJournalText(e.target.value);
             }}
-            placeholder="Write about your day..."
+            placeholder="What's on your mind..."
             sx={{
               position: 'absolute',
               top: 0, left: 0, right: 0, bottom: 0,
