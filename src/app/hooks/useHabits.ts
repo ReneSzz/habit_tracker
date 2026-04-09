@@ -36,6 +36,7 @@ export function useHabits(user: User | null) {
   const [weeklyRate, setWeeklyRate] = useState(0);
   const [completionMap, setCompletionMap] = useState<Record<string, number>>({});
   const [overallBestStreak, setOverallBestStreak] = useState(0);
+  const [completionNamesMap, setCompletionNamesMap] = useState<Record<string, string[]>>({});
 const fetchOverallBest = async () => {
   if (!user || !user.uid) return;
   try {
@@ -141,33 +142,36 @@ setOverallBestStreak(trueOverallBest);
     }
   };
 
-  const fetchAllCompletions = async () => {
-    if (!user || !user.uid) return;
-    try {
-      const habitsRef = collection(db, 'users', user.uid, 'habits');
-      const habitSnapshot = await getDocs(habitsRef);
-      const map: Record<string, number> = {};
-      await Promise.all(
-        habitSnapshot.docs.map(async (habitDoc) => {
-          const completionsRef = collection(
-            db,
-            'users',
-            user.uid,
-            'habits',
-            habitDoc.id,
-            'completions',
-          );
-          const completionsSnap = await getDocs(completionsRef);
-          completionsSnap.docs.forEach((d) => {
-            map[d.id] = (map[d.id] || 0) + 1;
-          });
-        }),
-      );
-      setCompletionMap(map);
-    } catch (error) {
-      console.error('Error fetching completions:', error);
-    }
-  };
+ const fetchAllCompletions = async () => {
+  if (!user || !user.uid) return;
+  try {
+    const habitsRef = collection(db, 'users', user.uid, 'habits');
+    const habitSnapshot = await getDocs(habitsRef);
+    const countMap: Record<string, number> = {};
+    const namesMap: Record<string, string[]> = {};
+
+    await Promise.all(
+      habitSnapshot.docs.map(async (habitDoc) => {
+        const data = habitDoc.data();
+        const completionsRef = collection(
+          db, 'users', user.uid, 'habits', habitDoc.id, 'completions',
+        );
+        const completionsSnap = await getDocs(completionsRef);
+        completionsSnap.docs.forEach((d) => {
+          const date = d.id;
+          countMap[date] = (countMap[date] || 0) + 1;
+          if (!namesMap[date]) namesMap[date] = [];
+          namesMap[date].push(data.title);
+        });
+      }),
+    );
+
+    setCompletionMap(countMap);
+    setCompletionNamesMap(namesMap);
+  } catch (error) {
+    console.error('Error fetching completions:', error);
+  }
+};
 
   const increaseProgress = async (habitId: string) => {
     if (!user || !user.uid) return;
@@ -292,5 +296,6 @@ setOverallBestStreak(trueOverallBest);
     deleteHabit,
     addHabit,
     fetchHabits,
+    completionNamesMap,
   };
 }

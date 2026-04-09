@@ -74,7 +74,8 @@ export default function Home() {
     removeProgress,
     deleteHabit,
     addHabit,
-  } = useHabits(user);
+    completionNamesMap,
+} = useHabits(user);
 
 
 const {
@@ -218,17 +219,60 @@ const {
 >
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mb: 2.5 }}>
-          {[
-            { label: 'Today', value: `${completedToday}/${totalHabits}`, sub: 'habits done' },
-            { label: 'Best', value: Math.max(bestStreak, overallBestStreak), sub: 'days' },
-            { label: 'Week', value: `${weeklyRate}%`, sub: 'rate' },
-          ].map(({ label, value, sub }) => (
-            <Box key={label} sx={{ backgroundColor: '#141414', borderRadius: '8px', padding: '10px 12px' }}>
-              <Typography sx={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>{label}</Typography>
-              <Typography sx={{ fontSize: 18, fontWeight: 500, color: '#fff' }}>{value}</Typography>
-              <Typography sx={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>{sub}</Typography>
-            </Box>
-          ))}
+          {/* Today */}
+<Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
+  <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>Today</Typography>
+  <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{completedToday}/{totalHabits}</Typography>
+  <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>habits done</Typography>
+</Box>
+
+{/* Best streak */}
+<Tooltip
+  title={(() => {
+    const best = Math.max(bestStreak, overallBestStreak);
+    if (best === 0) return 'No streak yet';
+    const topHabit = [...habits].sort((a, b) => b.streak - a.streak)[0];
+    return topHabit ? `${topHabit.title} — ${topHabit.streak} day${topHabit.streak !== 1 ? 's' : ''}` : '';
+  })()}
+  arrow
+  placement="top"
+>
+  <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px', cursor: 'default' }}>
+    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>Best streak</Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{Math.max(bestStreak, overallBestStreak)}</Typography>
+    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>days in a row</Typography>
+  </Box>
+</Tooltip>
+
+{/* This week */}
+<Tooltip
+  title={
+    <Box>
+      {habits.map((habit) => (
+        <Box key={habit.id} sx={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0' }}>
+          <Box sx={{
+            width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+            backgroundColor: habit.weeklyRate >= 50 ? '#74c69d' : 'rgba(255,255,255,0.3)',
+          }} />
+          <Typography sx={{ fontSize: 11, color: '#fff' }}>
+            {habit.title}
+          </Typography>
+          <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', ml: 'auto', pl: 2 }}>
+            {habit.weeklyRate}%
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  }
+  arrow
+  placement="top"
+>
+  <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px', cursor: 'default' }}>
+    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>This week</Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{weeklyRate}%</Typography>
+    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>completion rate</Typography>
+  </Box>
+</Tooltip>
         </Box>
 
         <Typography sx={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.5 }}>
@@ -320,7 +364,11 @@ const {
         <Typography sx={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.5 }}>
           Completion history
         </Typography>
-        <HeatMap completionMap={completionMap} totalHabits={totalHabits} />
+        <HeatMap
+  completionMap={completionMap}
+  completionNamesMap={completionNamesMap}
+  totalHabits={totalHabits}
+/>
         <Button
                   onClick={handleSignOut}
                   sx={{
@@ -365,24 +413,71 @@ const {
       <Typography sx={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.5 }}>
         Completion history
       </Typography>
-      <HeatMap completionMap={completionMap} totalHabits={totalHabits} />
+      <HeatMap
+  completionMap={completionMap}
+  completionNamesMap={completionNamesMap}
+  totalHabits={totalHabits}
+/>
     </Box>
 
     {/* main habits column */}
     <Box sx={{ flex: 1, overflowY: 'auto', padding: '24px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Box sx={{ width: '100%', maxWidth: '520px' }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mb: 3 }}>
-          {[
-            { label: 'Today', value: `${completedToday}/${totalHabits}`, sub: 'habits done' },
-            { label: 'Best streak', value: Math.max(bestStreak, overallBestStreak), sub: 'days in a row' },
-            { label: 'This week', value: `${weeklyRate}%`, sub: 'completion rate' },
-          ].map(({ label, value, sub }) => (
-            <Box key={label} sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
-              <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>{label}</Typography>
-              <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{value}</Typography>
-              <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>{sub}</Typography>
-            </Box>
-          ))}
+          {/* Today */}
+<Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px' }}>
+  <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>Today</Typography>
+  <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{completedToday}/{totalHabits}</Typography>
+  <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>habits done</Typography>
+</Box>
+
+{/* Best streak */}
+<Tooltip
+  title={(() => {
+    const best = Math.max(bestStreak, overallBestStreak);
+    if (best === 0) return 'No streak yet';
+    const topHabit = [...habits].sort((a, b) => b.streak - a.streak)[0];
+    return topHabit ? `${topHabit.title} — ${topHabit.streak} day${topHabit.streak !== 1 ? 's' : ''}` : '';
+  })()}
+  arrow
+  placement="top"
+>
+  <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px', cursor: 'default' }}>
+    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>Best streak</Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{Math.max(bestStreak, overallBestStreak)}</Typography>
+    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>days in a row</Typography>
+  </Box>
+</Tooltip>
+
+{/* This week */}
+<Tooltip
+  title={
+    <Box>
+      {habits.map((habit) => (
+        <Box key={habit.id} sx={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0' }}>
+          <Box sx={{
+            width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+            backgroundColor: habit.weeklyRate >= 50 ? '#74c69d' : 'rgba(255,255,255,0.3)',
+          }} />
+          <Typography sx={{ fontSize: 11, color: '#fff' }}>
+            {habit.title}
+          </Typography>
+          <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', ml: 'auto', pl: 2 }}>
+            {habit.weeklyRate}%
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  }
+  arrow
+  placement="top"
+>
+  <Box sx={{ backgroundColor: '#141414', borderRadius: '10px', padding: '14px 16px', cursor: 'default' }}>
+    <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', textTransform: 'uppercase', mb: 0.5 }}>This week</Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{weeklyRate}%</Typography>
+    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', mt: 0.25 }}>completion rate</Typography>
+  </Box>
+</Tooltip>
         </Box>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px', mb: 2 }}>

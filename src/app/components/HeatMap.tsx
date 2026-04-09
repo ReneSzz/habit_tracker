@@ -2,10 +2,11 @@ import { Box, Tooltip, Typography } from '@mui/material';
 
 interface HeatMapProps {
   completionMap: Record<string, number>;
+  completionNamesMap: Record<string, string[]>;
   totalHabits: number;
 }
 
-export default function HeatMap({ completionMap, totalHabits }: HeatMapProps) {
+export default function HeatMap({ completionMap, completionNamesMap, totalHabits }: HeatMapProps) {
   const today = new Date();
   const startDate = new Date(today.getFullYear(), 0, 1);
   const dayOfWeek = startDate.getDay();
@@ -75,17 +76,29 @@ export default function HeatMap({ completionMap, totalHabits }: HeatMapProps) {
             <Box key={wi} sx={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {week.map((cell, di) => (
                 <Tooltip
-                  key={di}
-                  title={
-                    cell.count < 0
-                      ? ''
-                      : cell.count === 0
-                      ? `${cell.date.toLocaleDateString('en-CA')} — no completions`
-                      : `${cell.date.toLocaleDateString('en-CA')} — ${cell.count} habit${cell.count !== 1 ? 's' : ''} completed`
-                  }
-                  placement="top"
-                  arrow
-                >
+  key={di}
+  placement="top"
+  arrow
+  title={(() => {
+    const dateStr = cell.date.toLocaleDateString('en-CA');
+    if (cell.count < 0) return '';
+    const names = completionNamesMap[dateStr];
+    if (!names || names.length === 0) return `${dateStr} — no completions`;
+    return (
+      <Box>
+        <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', mb: 0.5 }}>
+          {dateStr}
+        </Typography>
+        {names.map((name) => (
+          <Box key={name} sx={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '1px 0' }}>
+            <Box sx={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: '#FF4151', flexShrink: 0 }} />
+            <Typography sx={{ fontSize: 11, color: '#fff' }}>{name}</Typography>
+          </Box>
+        ))}
+      </Box>
+    );
+  })()}
+>
                  <Box sx={{
   width: '12px',
   height: '12px',
