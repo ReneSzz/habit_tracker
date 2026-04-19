@@ -22,15 +22,18 @@ A full-stack habit tracking app built with Next.js and Firebase. Track your dail
 
 
 ## Habit Completion and Undo 
-![ezgif-301c83c4833f3615](https://github.com/user-attachments/assets/7c54ec12-ea1e-4048-ac7f-2a751618c0d8)
+<img width="800" height="450" alt="ezgif-1ab3e14fde7b1ec2" src="https://github.com/user-attachments/assets/09fa1bb6-f2fd-4b10-82c5-39603a14c3de" />
 
 
 
 
 
 ## Habit Deletion and Creation
-![add delete](https://github.com/user-attachments/assets/a0759a97-1448-4eff-a25c-2ac69dff3410)
+<img width="800" height="450" alt="ezgif-16b5c389eabe932b" src="https://github.com/user-attachments/assets/4c12b2c3-5ef2-4870-afd1-1dabb1199c89" />
 
+
+## Note taking
+<img width="800" height="450" alt="ezgif-1b3b3c5b21c6fc00" src="https://github.com/user-attachments/assets/d981bd47-ac1d-4e2d-8aff-fadcf1138e3a" />
 
 
 ---
